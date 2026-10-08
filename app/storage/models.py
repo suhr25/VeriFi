@@ -1,13 +1,4 @@
-"""SQLAlchemy ORM models.
 
-Design choice: each table stores its corresponding Pydantic model as a JSON
-blob (`payload`) plus a handful of indexed columns needed for querying and
-joins. This keeps the storage layer simple (single source of truth is the
-Pydantic schema in app/schemas/, not a parallel hand-maintained ORM schema)
-while still preserving the PRD's required conceptual separation between
-sources / claims / evidence / verification_results / conflicts /
-research_runs / reports as distinct tables.
-"""
 from __future__ import annotations
 
 from datetime import datetime
@@ -225,6 +216,44 @@ class IngestionRunORM(Base):
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     started_at: Mapped[datetime] = mapped_column(DateTime)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class IpoORM(Base):
+    """One IPO: the fixed listing details plus the full text of its official
+    report (DRHP/RHP/prospectus), stored verbatim so the per-IPO search bar
+    can ground every answer in that exact text - never a guess. Structured
+    sections (financial summary, objects of issue, risk factors, promoters,
+    ...) live in `payload` as flexible JSON, matching the payload pattern
+    used by the research tables above, since an IPO document's sections
+    vary too much company to company to force into fixed columns."""
+
+    __tablename__ = "ipos"
+
+    ipo_id: Mapped[str] = mapped_column(String, primary_key=True)
+    company_name: Mapped[str] = mapped_column(String)
+    symbol: Mapped[str] = mapped_column(String, unique=True, index=True)
+    board: Mapped[str] = mapped_column(String, index=True)  # mainboard | sme
+    status: Mapped[str] = mapped_column(String, index=True)  # upcoming | open | closed | listed
+    exchange: Mapped[str] = mapped_column(String)  # NSE | BSE | NSE+BSE
+    open_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    close_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    listing_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    price_band_low: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
+    price_band_high: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
+    lot_size: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    face_value: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
+    issue_size_cr: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
+    fresh_issue_cr: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
+    ofs_cr: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
+    registrar: Mapped[str | None] = mapped_column(String, nullable=True)
+    lead_managers: Mapped[list] = mapped_column(JSON, default=list)
+    about: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Full report text (verbatim) - the only thing the Ask box is allowed to
+    # answer from. Never summarized or rewritten on the way in.
+    report_text: Mapped[str] = mapped_column(Text, default="")
+    payload: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+    updated_at: Mapped[datetime] = mapped_column(DateTime)
 
 
 class SearchLogORM(Base):

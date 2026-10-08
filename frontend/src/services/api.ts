@@ -366,3 +366,49 @@ export interface DatabaseAnswer {
 }
 
 export interface NotAnswered { answered: false; reason: string }
+
+// ---- IPO Centre -------------------------------------------------------------
+
+export interface IpoSummary {
+  ipo_id: string;
+  company_name: string;
+  symbol: string;
+  board: string;
+  status: "upcoming" | "open" | "closed" | "listed" | string;
+  exchange: string;
+  open_date?: string | null;
+  close_date?: string | null;
+  listing_date?: string | null;
+  price_band_low?: number | null;
+  price_band_high?: number | null;
+  lot_size?: number | null;
+  issue_size_cr?: number | null;
+}
+
+export interface IpoDetail extends IpoSummary {
+  face_value?: number | null;
+  fresh_issue_cr?: number | null;
+  ofs_cr?: number | null;
+  registrar?: string | null;
+  lead_managers: string[];
+  about?: string | null;
+  payload: Record<string, unknown>;
+  has_report: boolean;
+  updated_at: string;
+}
+
+export interface IpoAskResponse {
+  answer: string;
+  grounded: boolean;
+  excerpt?: string | null;
+}
+
+export const ipoApi = {
+  list: (board = "mainboard") => fetchJson<IpoSummary[]>(`/api/ipos?board=${encodeURIComponent(board)}`),
+  get: (id: string) => fetchJson<IpoDetail>(`/api/ipos/${id}`),
+  ask: (id: string, question: string) => fetchJson<IpoAskResponse>(`/api/ipos/${id}/ask`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question }),
+  }),
+};

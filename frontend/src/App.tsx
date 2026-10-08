@@ -21,6 +21,7 @@ import {
   Menu,
   PanelLeftClose,
   RefreshCw,
+  Rocket,
   Search,
   Send,
   ShieldCheck,
@@ -28,6 +29,7 @@ import {
   X,
 } from "lucide-react";
 import { IndustryView } from "./industry/IndustryView";
+import { IpoDetailView, IpoListView } from "./ipo/IpoView";
 import { api, industryApi, type DatabaseAnswer as DatabaseAnswerData, type IndustrySummary, type Claim, type Conflict, type HealthResponse, type Report, type ResearchRun, type Source } from "./services/api";
 import { Sidebar, type NavSection } from "./components/Sidebar";
 import { UserMenu } from "./components/UserMenu";
@@ -41,7 +43,7 @@ type Tab = "overview" | "financials" | "risks" | "findings" | "claims" | "confli
 type ClaimFilter = "all" | "supported" | "contradicted" | "insufficient";
 
 const examples = ["Analyze Infosys revenue and risks", "Compare TCS and Wipro", "HCLTech profitability and margins", "Analyze Persistent Systems growth"];
-type AppView = { kind: "industry"; id: string } | { kind: "research" };
+type AppView = { kind: "industry"; id: string } | { kind: "research" } | { kind: "ipo-list" } | { kind: "ipo-detail"; id: string };
 const POLL_INTERVAL_MS = 1500;
 const MAX_CONSECUTIVE_POLL_ERRORS = 5;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -177,15 +179,23 @@ function App({ user, onSignOut }: { user: SessionUser; onSignOut: (next?: "signi
         ] : []),
       ],
     },
+    {
+      label: "IPO Centre",
+      items: [
+        { id: "ipos", label: "Mainboard IPOs", icon: <Rocket size={18} />, active: appView.kind === "ipo-list" || appView.kind === "ipo-detail", onSelect: () => go({ kind: "ipo-list" }) },
+      ],
+    },
   ];
 
   return <div className="research-app">
     <Sidebar sections={navSections} collapsed={collapsed} onToggle={toggleSidebar} mobileOpen={sidebarOpen} onCloseMobile={closeSidebar}
       user={user} status={health?.demo_mode ? { tone: "amber", label: "Offline snapshot" } : { tone: "teal", label: "Verified data" }} />
     <main className="main">
-      <header className="topbar"><button type="button" className="mobile-menu" aria-label="Open navigation" onClick={() => setSidebarOpen(true)}><Menu size={19} /></button><div className="breadcrumb"><span>{appView.kind === "industry" ? "Industries" : "Company research"}</span><ChevronRight size={14} /><strong>{appView.kind === "industry" ? (industries.find((i) => i.id === appView.id)?.name ?? "Industry") : "Verified deep dive"}</strong></div><div className="topbar-meta"><span><StatusDot tone={health?.demo_mode ? "amber" : "teal"} /> {health?.demo_mode ? "Offline snapshot" : "Verified data"}</span><UserMenu user={user} onSignOut={onSignOut} /></div></header>
+      <header className="topbar"><button type="button" className="mobile-menu" aria-label="Open navigation" onClick={() => setSidebarOpen(true)}><Menu size={19} /></button><div className="breadcrumb"><span>{appView.kind === "industry" ? "Industries" : appView.kind.startsWith("ipo") ? "IPO Centre" : "Company research"}</span><ChevronRight size={14} /><strong>{appView.kind === "industry" ? (industries.find((i) => i.id === appView.id)?.name ?? "Industry") : appView.kind === "ipo-list" ? "Mainboard IPOs" : appView.kind === "ipo-detail" ? "IPO report" : "Verified deep dive"}</strong></div><div className="topbar-meta"><span><StatusDot tone={health?.demo_mode ? "amber" : "teal"} /> {health?.demo_mode ? "Offline snapshot" : "Verified data"}</span><UserMenu user={user} onSignOut={onSignOut} /></div></header>
       <div className="content-shell">
         {appView.kind === "industry" && <IndustryView key={appView.id} industryId={appView.id} onDeepDive={openDeepDive} />}
+        {appView.kind === "ipo-list" && <IpoListView onOpen={(id) => go({ kind: "ipo-detail", id })} />}
+        {appView.kind === "ipo-detail" && <IpoDetailView key={appView.id} ipoId={appView.id} onBack={() => go({ kind: "ipo-list" })} />}
         {appView.kind === "research" && <div className="view-anim">
           <section className="hero"><div><div className="hero-kicker"><Sparkles size={14} /> VERIFIED REPORTS</div><h1>Verified deep dive</h1><p>One company, every claim traced to its source. Slower by design - each figure is checked by the LLM verifier.</p></div><div className="hero-note"><ShieldCheck size={17} /><span>Every factual claim is independently verified against its source.</span></div></section>
           <section className="query-panel"><div className="query-label"><Search size={15} /><label htmlFor="research-query">Company or research query</label><kbd>ENTER</kbd></div><div className="query-row"><input id="research-query" value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => event.key === "Enter" && runResearch()} placeholder="e.g. Analyze Infosys revenue and risks" disabled={loading} /><Button variant="primary" onClick={() => runResearch()} disabled={loading}>{loading ? <><LoaderCircle size={15} className="spin" /> Running</> : <><Send size={15} /> Run research</>}</Button></div><div className="example-chips">{examples.map((example) => <button type="button" key={example} onClick={() => runResearch(example)} disabled={loading}>{example}</button>)}</div>{health && <div className={`mode-banner ${health.demo_mode ? "demo" : "live"}`}><StatusDot tone={health.demo_mode ? "amber" : "teal"} /><span>{health.demo_mode ? "Demo mode: sources are synthetic and explicitly labelled." : "Live mode: connected to real filings, financial data, and web sources."}</span></div>}</section>

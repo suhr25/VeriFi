@@ -21,6 +21,7 @@ from app.industry.universe import list_industries
 from app.schemas import Claim, Conflict, ResearchRun, Source
 from app.schemas.answer import DatabaseAnswer, NotAnswered
 from app.schemas.industry import IndustrySnapshot, IndustrySummary
+from app.schemas.ipo import IpoAskRequest, IpoAskResponse, IpoDetail, IpoSummary
 from app.storage import repositories as repo
 from app.storage.database import get_session
 from app.storage.models import ResearchRunORM, SearchLogORM
@@ -160,3 +161,77 @@ def get_research_report(research_id: str, db: Session = Depends(db_session)):
     if not report:
         raise HTTPException(status_code=404, detail="report not found")
     return report
+
+
+# ---- IPO Centre -------------------------------------------------------
+
+def _ipo_summary(row) -> IpoSummary:
+    return IpoSummary(
+        ipo_id=row.ipo_id, company_name=row.company_name, symbol=row.symbol, board=row.board,
+        status=row.status, exchange=row.exchange, open_date=row.open_date, close_date=row.close_date,
+        listing_date=row.listing_date,
+        price_band_low=float(row.price_band_low) if row.price_band_low is not None else None,
+        price_band_high=float(row.price_band_high) if row.price_band_high is not None else None,
+        lot_size=row.lot_size, issue_size_cr=float(row.issue_size_cr) if row.issue_size_cr is not None else None,
+    )
+
+
+@router.get("/ipos", response_model=list[IpoSummary])
+def list_ipos(board: str = "mainboard", db: Session = Depends(db_session)):
+    """Upcoming/open/closed/listed IPOs, soonest-closing first. board="" returns every board."""
+    return [_ipo_summary(row) for row in repo.list_ipos(db, board=board or None)]
+
+
+@router.get("/ipos/{ipo_id}", response_model=IpoDetail)
+def get_ipo(ipo_id: str, db: Session = Depends(db_session)):
+    row = repo.get_ipo(db, ipo_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="IPO not found")
+    summary = _ipo_summary(row)
+    return IpoDetail(
+        **summary.model_dump(), face_value=float(row.face_value) if row.face_value is not None else None,
+        fresh_issue_cr=float(row.fresh_issue_cr) if row.fresh_issue_cr is not None else None,
+        ofs_cr=float(row.ofs_cr) if row.ofs_cr is not None else None, registrar=row.registrar,
+        lead_managers=row.lead_managers or [], about=row.about, payload=row.payload or {},
+        has_report=bool(row.report_text), updated_at=row.updated_at,
+    )
+
+
+IPO_ASK_SYSTEM_PROMPT = (
+    "You answer questions about an IPO using ONLY the excerpt of its official report given below. "
+    "Never use outside knowledge, never guess, and never state a number that is not in the excerpt. "
+    "If the excerpt does not contain the answer, say plainly that the report does not mention it - "
+    "do not speculate about what it might say."
+)
+
+
+@router.post("/ipos/{ipo_id}/ask", response_model=IpoAskResponse)
+def ask_ipo(ipo_id: str, req: IpoAskRequest, db: Session = Depends(db_session)):
+    """Answers a free-text question strictly from this IPO's stored report
+    text - never from payload, never from the LLM's own knowledge. The same
+    RAG chunk-retrieval used by the research pipeline's Claim Extractor
+    (app/rag/indexer.py) picks the most relevant excerpt first, so the
+    question is answered from the right section of a long report rather
+    than whatever happened to be first."""
+    from app.llm import get_llm_provider
+    from app.rag import retrieve_relevant_text
+
+    row = repo.get_ipo(db, ipo_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="IPO not found")
+    question = req.question.strip()
+    if not question:
+        raise HTTPException(status_code=400, detail="question must not be empty")
+    if not row.report_text:
+        return IpoAskResponse(answer="No report has been added for this IPO yet, so there is nothing to search.", grounded=False)
+
+    excerpt = retrieve_relevant_text(row.report_text, question, max_chars=6000)
+    llm = get_llm_provider()
+    if llm is None:
+        return IpoAskResponse(
+            answer="The AI answerer isn't configured right now - showing the most relevant excerpt from the report instead.",
+            grounded=False, excerpt=excerpt,
+        )
+    user_prompt = f"Report excerpt:\n\"\"\"\n{excerpt}\n\"\"\"\n\nQuestion: {question}"
+    answer = llm.complete(IPO_ASK_SYSTEM_PROMPT, user_prompt, max_tokens=500)
+    return IpoAskResponse(answer=answer.strip(), grounded=True, excerpt=excerpt)

@@ -1,14 +1,4 @@
-"""Database engine and schema setup.
 
-PostgreSQL (with pgvector) is the primary database - locally via
-`docker compose up -d db`, and a hosted Postgres (Neon/Supabase) when
-deployed. The schema is owned by Alembic migrations (migrations/), applied
-automatically on startup, so a fresh database and a deployed one always end
-up with identical tables.
-
-SQLite remains supported as a zero-setup fallback (and for the test suite):
-there the tables are created directly from the models.
-"""
 from __future__ import annotations
 
 import logging

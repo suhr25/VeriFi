@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -30,6 +31,14 @@ async def lifespan(app: FastAPI):
 
     for industry in list_industries():
         IndustryService().refresh_in_background(industry.id)
+
+    # Loading the RAG embedding model is CPU-bound and can take well over a
+    # minute on a modest machine - doing it now means the first real Ask-box
+    # question never pays that cost on the request path.
+    from app.rag import warm_up as warm_up_rag
+
+    threading.Thread(target=warm_up_rag, name="rag-warmup", daemon=True).start()
+
     logger.info(
         "Startup complete. demo_mode=%s llm_provider=%s llm_available=%s",
         settings.effective_demo_mode,

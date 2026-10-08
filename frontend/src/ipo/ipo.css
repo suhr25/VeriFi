@@ -1,0 +1,68 @@
+/* IPO Centre - matches the VeriFi design tokens in styles.css (teal/ink
+   palette, Space Grotesk headings, DM Mono labels) so it reads as part of
+   the same product, not a bolted-on page. */
+
+.ipo-board { padding: 2px 7px; margin-left: 2px; border-radius: 4px; color: #137d72; background: var(--teal-pale); font: 500 9px "DM Mono", monospace; letter-spacing: .04em; text-transform: uppercase; vertical-align: middle; }
+
+.ipo-status { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 999px; font: 600 10px "DM Mono", monospace; letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; }
+.ipo-status-upcoming { color: #936b31; background: var(--amber-pale); }
+.ipo-status-open { color: #0b6d63; background: var(--teal-pale); }
+.ipo-status-closed { color: #5f716d; background: #eef3f1; }
+.ipo-status-listed { color: #fff; background: var(--ink); }
+.ipo-status-dot { width: 6px; height: 6px; border-radius: 50%; background: #17a893; box-shadow: 0 0 0 3px rgba(23, 168, 147, .18); animation: ipo-pulse 1.6s ease-in-out infinite; }
+@keyframes ipo-pulse { 50% { opacity: .45; } }
+
+.ipo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-top: 6px; }
+.ipo-card { display: flex; flex-direction: column; gap: 10px; padding: 18px 19px 16px; text-align: left; border: 1px solid var(--line); border-radius: 12px; background: #fff; box-shadow: 0 1px 2px rgba(16, 34, 43, .03); transition: transform 180ms var(--ease), box-shadow 180ms var(--ease), border-color 180ms ease; }
+.ipo-card:hover { transform: translateY(-2px); border-color: #b7d8d0; box-shadow: 0 12px 28px rgba(16, 34, 43, .08); }
+.ipo-card.skeleton { min-height: 214px; background: linear-gradient(100deg, #fff 30%, #f1f6f4 48%, #fff 66%); background-size: 200% 100%; animation: ipo-shimmer 1.5s ease-in-out infinite; pointer-events: none; }
+@keyframes ipo-shimmer { from { background-position: 180% 0; } to { background-position: -20% 0; } }
+.ipo-card-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ipo-card-mono { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; background: var(--ink); color: #f0f8f5; font: 600 14px "Space Grotesk", sans-serif; }
+.ipo-card-name { font: 600 16px "Space Grotesk", sans-serif; letter-spacing: -.02em; color: var(--ink); }
+.ipo-card-sub { color: #8a9b97; font-size: 11.5px; }
+.ipo-card-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 2px 0; padding: 12px 0; border-top: 1px solid #eef4f1; border-bottom: 1px solid #eef4f1; }
+.ipo-card-stats div { display: flex; flex-direction: column; gap: 3px; }
+.ipo-card-stats span { color: #8a9b97; font: 500 9px "DM Mono", monospace; text-transform: uppercase; letter-spacing: .03em; }
+.ipo-card-stats strong { color: var(--ink-2); font: 600 13px "Space Grotesk", sans-serif; }
+.ipo-card-dates { display: flex; align-items: center; gap: 6px; color: #6d8680; font-size: 11px; }
+.ipo-card-cta { display: flex; align-items: center; gap: 6px; margin-top: 2px; color: var(--teal-dark); font: 600 11.5px "DM Sans", sans-serif; }
+
+.ipo-back { display: inline-flex; align-items: center; gap: 5px; margin-bottom: 14px; padding: 0; color: #6d8680; background: transparent; font-size: 12px; transition: color 160ms ease; }
+.ipo-back:hover { color: var(--teal-dark); }
+.ipo-detail-head h2 { margin: 6px 0 4px; font: 600 15px "DM Mono", monospace; font-weight: 500; color: #6d8680; letter-spacing: 0; }
+.ipo-metrics { grid-template-columns: repeat(4, 1fr); }
+
+.ipo-list { margin: 0; padding-left: 18px; color: #465f5d; font-size: 13px; line-height: 1.8; }
+.ipo-kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.ipo-kv div { padding: 10px 12px; border-radius: 7px; background: #f8fbf9; }
+.ipo-kv span { display: block; color: #8a9b97; font: 500 9.5px "DM Mono", monospace; text-transform: uppercase; }
+.ipo-kv strong { display: block; margin-top: 4px; color: var(--ink-2); font-size: 13px; }
+
+.ipo-ask-label { display: flex; align-items: center; gap: 8px; color: #6d8680; margin-bottom: 10px; }
+.ipo-ask-label label { font-size: 12px; font-weight: 600; }
+.ipo-ask-row { display: flex; gap: 10px; }
+.ipo-ask-row input { min-width: 0; flex: 1; height: 46px; padding: 0 15px; border: 1px solid #cddfd9; border-radius: 10px; background: #fbfdfc; color: var(--ink); font-size: 13.5px; outline: 0; transition: border-color 160ms ease, box-shadow 160ms ease; }
+.ipo-ask-row input:focus { border-color: #6bbeb3; box-shadow: 0 0 0 3px rgba(49, 175, 160, .1); }
+.ipo-ask-row .button { height: 46px; padding: 0 18px; border-radius: 10px; }
+.ipo-ask-hint { margin: 10px 0 0; color: #96a6a2; font-size: 11.5px; }
+
+.ipo-thread { display: flex; flex-direction: column; gap: 14px; margin-top: 20px; padding-top: 18px; border-top: 1px solid #eef4f1; }
+.ipo-turn { display: flex; flex-direction: column; gap: 8px; animation: panel-in 220ms var(--ease); }
+.ipo-turn-q { display: flex; align-items: center; gap: 10px; color: var(--ink-2); font: 600 13px "DM Sans", sans-serif; }
+.ipo-turn-a { display: flex; gap: 10px; align-items: flex-start; }
+.ipo-turn-a p { margin: 0; color: #465f5d; font-size: 13px; line-height: 1.7; white-space: pre-wrap; }
+.ipo-turn-avatar { flex: 0 0 auto; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 7px; color: var(--ink-2); background: #eef3f1; font: 600 11px "DM Mono", monospace; }
+.ipo-turn-avatar.a { color: #fff; background: var(--teal); }
+.ipo-turn-tag { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; color: var(--teal-dark); font: 500 10px "DM Mono", monospace; }
+
+@media (max-width: 820px) {
+  .ipo-metrics { grid-template-columns: repeat(2, 1fr); }
+  .ipo-card-stats { grid-template-columns: 1fr 1fr 1fr; }
+}
+@media (max-width: 560px) {
+  .ipo-grid { grid-template-columns: 1fr; }
+  .ipo-ask-row { flex-direction: column; }
+  .ipo-ask-row .button { width: 100%; }
+  .ipo-metrics { grid-template-columns: 1fr 1fr; }
+}

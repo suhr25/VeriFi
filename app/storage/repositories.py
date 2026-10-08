@@ -6,6 +6,7 @@ or writes raw SQL.
 from __future__ import annotations
 
 import json
+from datetime import date
 from uuid import uuid4
 
 from sqlalchemy import select
@@ -24,6 +25,7 @@ from app.storage.models import (
     ClaimORM,
     ConflictORM,
     EvidenceORM,
+    IpoORM,
     ReportORM,
     ResearchRunORM,
     SourceORM,
@@ -193,3 +195,20 @@ def save_report(db: Session, research_run_id: str, report: Report) -> None:
 def get_report_for_run(db: Session, research_run_id: str) -> Report | None:
     row = db.scalar(select(ReportORM).where(ReportORM.research_run_id == research_run_id))
     return Report.model_validate(row.payload) if row else None
+
+
+# ---- IPOs -----------------------------------------------------------------
+
+def list_ipos(db: Session, board: str | None = None) -> list[IpoORM]:
+    stmt = select(IpoORM)
+    if board:
+        stmt = stmt.where(IpoORM.board == board)
+    # Soonest-closing first: open IPOs lead, then upcoming by open date, then
+    # everything else by most recently updated.
+    rows = db.scalars(stmt).all()
+    order = {"open": 0, "upcoming": 1, "closed": 2, "listed": 3}
+    return sorted(rows, key=lambda r: (order.get(r.status, 9), r.open_date or date.max))
+
+
+def get_ipo(db: Session, ipo_id: str) -> IpoORM | None:
+    return db.get(IpoORM, ipo_id)
