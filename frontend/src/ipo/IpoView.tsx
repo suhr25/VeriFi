@@ -53,11 +53,11 @@ export function IpoListView({ onOpen }: { onOpen: (ipoId: string) => void }) {
   return <div className="view-anim">
     <section className="hero">
       <div>
-        <div className="hero-kicker"><Sparkles size={14} /> IPO CENTRE</div>
+        <div className="hero-kicker"><Building2 size={13} /> IPO Centre</div>
         <h1>Mainboard IPOs</h1>
-        <p>Official listing details and the full report for each IPO, with a search bar that answers questions straight from that report - never a guess.</p>
+        <p>Listing details and the full offer-document report for each mainboard IPO. Questions are answered from the stored report only.</p>
       </div>
-      <div className="hero-note"><ShieldCheck size={17} /><span>Every answer is grounded in the stored report text for that IPO.</span></div>
+      <div className="hero-note"><ShieldCheck size={15} /><span>If the report doesn't cover something, the answer says so.</span></div>
     </section>
 
     {error && <div className="error-panel"><AlertTriangle size={18} /><div><strong>Could not load IPOs</strong><span>{error}</span></div></div>}
@@ -67,7 +67,7 @@ export function IpoListView({ onOpen }: { onOpen: (ipoId: string) => void }) {
     {ipos && ipos.length === 0 && <div className="empty-state large">
       <div className="empty-icon"><Building2 size={22} /></div>
       <h2>No mainboard IPOs added yet</h2>
-      <p>No IPO is open right now. Once listing details and the official report for an IPO are added, it will appear here - with its full financials and a search bar grounded in that exact report.</p>
+      <p>IPOs appear here once their listing details and offer-document report have been added.</p>
     </div>}
 
     {ipos && ipos.length > 0 && <div className="ipo-grid">
@@ -173,7 +173,7 @@ function AskPanel({ ipoId, hasReport }: { ipoId: string; hasReport: boolean }) {
         <div className="ipo-turn-q"><span className="ipo-turn-avatar">Q</span>{turn.question}</div>
         <div className="ipo-turn-a">
           <span className="ipo-turn-avatar a">A</span>
-          <div><p>{turn.answer}</p><span className="ipo-turn-tag"><ShieldCheck size={11} /> {turn.grounded ? "Answered from the stored report" : "Showing the most relevant excerpt"}</span></div>
+          <div><p>{turn.answer}</p><span className="ipo-turn-tag"><ShieldCheck size={11} /> {turn.grounded ? "From the stored report" : "Most relevant excerpt"}</span></div>
         </div>
       </div>)}
     </div>}
@@ -221,10 +221,16 @@ export function IpoDetailView({ ipoId, onBack }: { ipoId: string; onBack: () => 
 
   return <div className="view-anim">
     <button type="button" className="ipo-back" onClick={onBack}><ChevronRight size={14} style={{ transform: "rotate(180deg)" }} /> All mainboard IPOs</button>
-    <section className="results-heading ipo-detail-head">
+    <section className="ipo-detail-head">
+      <span className="ipo-detail-mono" aria-hidden="true">{ipo.company_name.slice(0, 1).toUpperCase()}</span>
       <div>
-        <div className="company-line"><span className="company-monogram">{ipo.company_name.slice(0, 1).toUpperCase()}</span><span>{ipo.company_name}</span><StatusPill status={ipo.status} /></div>
-        <h2>{ipo.symbol} · {ipo.exchange} <span className="ipo-board">Mainboard</span></h2>
+        <h1>{ipo.company_name}</h1>
+        <div className="ipo-detail-meta">
+          <span className="ipo-symbol">{ipo.symbol}</span>
+          <span>{ipo.exchange}</span>
+          <span className="ipo-board">Mainboard</span>
+          <StatusPill status={ipo.status} />
+        </div>
         <p>Open {formatDate(ipo.open_date)} · Close {formatDate(ipo.close_date)} · Listing {formatDate(ipo.listing_date)}</p>
       </div>
     </section>
@@ -238,7 +244,7 @@ export function IpoDetailView({ ipoId, onBack }: { ipoId: string; onBack: () => 
 
     {!ipo.has_report && <div className="notice-strip"><Database size={15} /><span>Listing details are in - the full report hasn't been added yet, so the Ask box has nothing to search.</span></div>}
 
-    {sections.length > 0 && <Tabs label="IPO detail sections" active={tab} onChange={setTab} tabs={sections.map(({ id, label, icon }) => ({ id, label, icon }))} />}
+    {sections.length > 0 && <div className="ipo-detail-tabs"><Tabs label="IPO detail sections" active={tab} onChange={setTab} tabs={sections.map(({ id, label, icon }) => ({ id, label, icon }))} /></div>}
     <div className="result-panel panel-anim" key={tab}>{activeSection?.render()}</div>
   </div>;
 }

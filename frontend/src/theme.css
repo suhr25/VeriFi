@@ -1,0 +1,93 @@
+/* VeriFi design tokens. Every colour, space, radius, shadow and duration in
+   the app should come from here; the older short names (--ink, --teal, ...)
+   used across component stylesheets are mapped onto these at the bottom. */
+
+:root {
+  /* ---- Neutrals (cool, slightly green-tinted) ---- */
+  --background: #f2f5f4;
+  --surface: #ffffff;
+  --surface-sunken: #eef3f1;
+  --surface-hover: #f6faf8;
+  --border: #d6e0dd;
+  --border-subtle: #e8efed;
+  --border-strong: #c3d3cf;
+
+  --text-primary: #0e212a;
+  --text-secondary: #4a5f67;
+  --text-muted: #7b8e93;
+  --text-faint: #a3b2b5;
+
+  /* ---- Brand ---- */
+  --brand-ink: #071a20;       /* deepest teal-navy: login story, sidebar */
+  --brand-ink-2: #0c252c;
+  --sidebar-bg: #0a1c22;
+  --accent: #14958a;
+  --accent-hover: #0f8076;
+  --accent-strong: #0a6a62;
+  --accent-soft: #e3f3f0;
+  --accent-bright: #3fd6c4;   /* only on dark backgrounds */
+
+  /* ---- Semantic ---- */
+  --success: #1d8a5c;
+  --success-soft: #e2f3ea;
+  --warning: #a2701f;
+  --warning-soft: #fbf2e0;
+  --danger: #b5483f;
+  --danger-soft: #fbeceb;
+
+  /* ---- Type ---- */
+  --font-sans: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Space Grotesk', 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, 'SFMono-Regular', monospace;
+  --font-num: var(--font-mono);   /* every figure is set in mono, terminal-style */
+  --text-display: clamp(34px, 3.6vw, 46px);
+  --text-page: clamp(26px, 2.4vw, 32px);
+  --text-section: 18px;
+  --text-card: 15px;
+  --text-body: 14px;
+  --text-small: 12.5px;
+  --text-meta: 11px;
+
+  /* ---- Space (4-based) ---- */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px;
+  --s-6: 24px; --s-8: 32px; --s-10: 40px; --s-12: 48px; --s-16: 64px;
+
+  /* ---- Radius ---- */
+  /* Sharp, instrument-like corners */
+  --r-xs: 2px; --r-sm: 3px; --r-md: 5px; --r-lg: 6px; --r-xl: 10px; --r-full: 999px;
+
+  /* ---- Elevation ---- */
+  --shadow-xs: none;
+  --shadow-sm: 0 1px 2px rgba(14, 33, 42, .05);
+  --shadow-md: 0 2px 4px rgba(14, 33, 42, .04), 0 8px 24px rgba(14, 33, 42, .07);
+  --shadow-lg: 0 4px 10px rgba(14, 33, 42, .05), 0 22px 48px rgba(14, 33, 42, .12);
+  --ring: 0 0 0 3px rgba(20, 149, 138, .2);
+
+  /* ---- Motion ---- */
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --dur-micro: 150ms;
+  --dur: 240ms;
+  --dur-lg: 520ms;
+  --dur-hero: 900ms;
+
+  /* ---- Legacy names, mapped onto the tokens above ---- */
+  --ink: var(--text-primary);
+  --ink-2: var(--text-secondary);
+  --muted: var(--text-muted);
+  --paper: var(--background);
+  --panel: var(--surface);
+  --line: var(--border);
+  --teal: var(--accent);
+  --teal-dark: var(--accent-strong);
+  --teal-pale: var(--accent-soft);
+  --amber: var(--warning);
+  --amber-pale: var(--warning-soft);
+  --red: var(--danger);
+  --red-pale: var(--danger-soft);
+  --shadow: var(--shadow-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur: 1ms; --dur-lg: 1ms; --dur-hero: 1ms; }
+}

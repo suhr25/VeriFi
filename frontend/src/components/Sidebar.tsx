@@ -58,7 +58,7 @@ export function Sidebar({
           </button>
           <div className="sb-word">
             <strong>Veri<span>Fi</span></strong>
-            <small>Every number has a story</small>
+            <small>Financial research</small>
           </div>
           <button type="button" className="sb-icon-btn sb-collapse" onClick={onToggle} aria-label={`Collapse sidebar (${TOGGLE_HINT})`} title={`Collapse · ${TOGGLE_HINT}`}>
             <PanelLeftClose size={17} />
@@ -82,11 +82,11 @@ export function Sidebar({
           ))}
         </nav>
 
-        <div className="sb-foot" data-tip={demo ? "Guest explorer" : user.name}>
+        <div className="sb-foot" data-tip={demo ? "Guest" : user.name}>
           <span className={`sb-avatar ${demo ? "demo" : ""}`}>{demo ? "G" : initials(user.name)}</span>
           <div className="sb-foot-copy">
-            <strong>{demo ? "Guest explorer" : user.name}</strong>
-            <small><i className={`sb-dot ${status.tone}`} />{demo ? `Demo · ends ${sessionEnds(user)}` : status.label}</small>
+            <strong>{demo ? "Guest" : user.name}</strong>
+            <small><i className={`sb-dot ${status.tone}`} />{demo ? `Session ends ${sessionEnds(user)}` : status.label}</small>
           </div>
         </div>
       </aside>

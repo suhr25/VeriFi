@@ -4,6 +4,7 @@ import App from "./App";
 import { LoginPage } from "./auth/LoginPage";
 import { BrandMark } from "./components/Brand";
 import { authApi, UNAUTHORIZED_EVENT, type SessionUser } from "./services/api";
+import "./theme.css";
 import "./styles.css";
 
 /** Session gate: the workspace only mounts for a signed-in or demo user.

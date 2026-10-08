@@ -35,14 +35,14 @@ export function DatabaseAnswer({ answer, onRunResearch, onOpenIndustry }: {
     <section className="dba" aria-label="Answer">
       <header className="dba-head">
         <div>
-          <div className="dba-source"><Database size={13} /> Answered from the VeriFi database <span className="dba-speed"><Zap size={12} /> {answer.elapsed_ms} ms</span></div>
+          <div className="dba-source"><Database size={13} /> Answered from stored filings <span className="dba-speed"><Zap size={12} /> {answer.elapsed_ms} ms</span></div>
           <h2>{answer.intent === "comparison" ? title : `${cos[0]?.name ?? title}`}</h2>
           <p>
             {answer.intent === "comparison" ? "Side-by-side, from each company's own reported results" : "From the company's own reported results"}
             {" · "}{answer.coverage}{synced ? ` · checked against the source ${synced}` : ""}
           </p>
         </div>
-        <span className="dba-verified"><BadgeCheck size={15} /> Verified figures</span>
+        <span className="dba-verified"><BadgeCheck size={15} /> Checked figures</span>
       </header>
 
       {answer.warnings.length > 0 && <div className="warn-strip"><AlertTriangle size={14} /><span>{answer.warnings.join(" · ")}</span></div>}
@@ -74,7 +74,7 @@ export function DatabaseAnswer({ answer, onRunResearch, onOpenIndustry }: {
       </section>
 
       <section className="dba-block">
-        <div className="section-title"><span className="eyebrow">Where every number comes from</span></div>
+        <div className="section-title"><span className="eyebrow">Sources and checks</span></div>
         <div className={`dba-proof n${cos.length}`}>
           {cos.map((c) => <Proof key={c.nse} company={c} />)}
         </div>
@@ -83,10 +83,10 @@ export function DatabaseAnswer({ answer, onRunResearch, onOpenIndustry }: {
       <div className={`dba-next ${answer.wants_qualitative ? "strong" : ""}`}>
         <div>
           <strong>{answer.wants_qualitative ? `The database holds reported financials - not ${answer.qualitative_terms.join(", ")}.` : "Need news, risks or management commentary?"}</strong>
-          <p>Full research reads live sources (news, filings, coverage) and checks every claim against its source. It takes a few minutes the first time; the same question asked again is answered instantly from the database.</p>
+          <p>A full report reads live sources (news, filings, coverage) and checks each claim against its source. It takes a few minutes the first time; asking the same question again is instant.</p>
         </div>
         <div className="dba-next-actions">
-          <button type="button" className="button button-primary" onClick={onRunResearch}><ScanSearch size={15} /> Run full research</button>
+          <button type="button" className="button button-primary" onClick={onRunResearch}><ScanSearch size={15} /> Run full report</button>
           <button type="button" className="button button-secondary" onClick={onOpenIndustry}><Layers size={15} /> Industry view</button>
         </div>
       </div>

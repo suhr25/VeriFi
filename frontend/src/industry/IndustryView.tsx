@@ -106,7 +106,7 @@ export function IndustryView({ industryId, onDeepDive }: { industryId: string; o
       </section>
 
       <section className="insights" aria-label="Key takeaways">
-        <div className="section-title insights-title"><span className="eyebrow">Key takeaways · computed from the data, not generated</span></div>
+        <div className="section-title insights-title"><span className="eyebrow">Key takeaways · calculated from reported figures</span></div>
         <Carousel label="takeaways" count={snap.insights.length}>
           {snap.insights.map((item, i) => {
             const Icon = INSIGHT_ICON[item.kind] ?? Sparkles;
@@ -131,7 +131,7 @@ export function IndustryView({ industryId, onDeepDive }: { industryId: string; o
       </div>
 
       <p className="ind-footnote">
-        Every figure comes from the companies' own reported quarterly results (consolidated), stored in the VeriFi database - each company's panel links to its source filings.
+        Figures come from each company's consolidated quarterly results as filed; open a company to see its source filings.
         {" "}{verified}/{companies.length} companies pass every consistency check. Answered from the database in {snap.fetch_seconds != null ? Math.round(snap.fetch_seconds * 1000) : "—"} ms. Not investment advice.
       </p>
 
@@ -185,7 +185,7 @@ function PeerTable({ companies, snap, onSelect, selected }: { companies: Company
     <div>
       <div className="panel-heading">
         <div><span className="eyebrow">Side by side</span><h3>Peer comparison</h3></div>
-        <span className="source-count">Click a column to sort · a row for detail · <b className="best-key">bold</b> = best in group</span>
+        <span className="source-count">Sort by any column · open a row for detail · <b className="best-key">●</b> best in group</span>
       </div>
       <div className="table-wrap peer-wrap">
         <table className="peer-table">
@@ -334,7 +334,7 @@ function CompanyPanel({ company: c, companies, snap, onClose, onDeepDive }: { co
           </section>
 
           <section>
-            <div className="section-title"><span className="eyebrow">Source filings · the story behind these numbers</span></div>
+            <div className="section-title"><span className="eyebrow">Source filings</span></div>
             <ul className="filing-list">
               {[...c.quarters].reverse().map((q) => (
                 <li key={q.period_end}>
@@ -346,7 +346,7 @@ function CompanyPanel({ company: c, companies, snap, onClose, onDeepDive }: { co
           </section>
 
           <section>
-            <div className="section-title"><span className="eyebrow">Cross-checks · deterministic, no LLM</span></div>
+            <div className="section-title"><span className="eyebrow">Consistency checks</span></div>
             <ul className="check-list">
               {c.checks.map((k) => (
                 <li key={k.metric + k.label} className={k.informational ? "info" : k.status}>
@@ -359,9 +359,9 @@ function CompanyPanel({ company: c, companies, snap, onClose, onDeepDive }: { co
         </div>
 
         <footer className="drawer-foot">
-          <p>Want source-level evidence - filings, news and risks, each claim checked against its source?</p>
+          <p>Need news, risks or management commentary? A research report covers these, with each claim checked against its source.</p>
           <button type="button" className="button button-primary" onClick={() => onDeepDive(`Analyze ${c.name} revenue, profitability and risks`)}>
-            <ScanSearch size={15} /> Run verified deep dive <ChevronRight size={14} />
+            <ScanSearch size={15} /> Run research report <ChevronRight size={14} />
           </button>
         </footer>
       </aside>

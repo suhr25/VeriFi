@@ -7,8 +7,8 @@ const STEPS = [
   { id: "planning", icon: Route, title: "Plan", body: "Identify the company and break the question into targeted sub-questions." },
   { id: "retrieving", icon: FileSearch, title: "Gather sources", body: "Pull filings, financial statements and coverage - each stored verbatim." },
   { id: "extracting", icon: ListChecks, title: "Extract claims", body: "Read every source for factual and financial statements, with the exact quote." },
-  { id: "verifying", icon: ShieldCheck, title: "Verify each claim", body: "An independent verifier checks every claim against its quote - never the report." },
-  { id: "complete", icon: FileText, title: "Build the report", body: "Only verified claims make it in, each linked to the source it came from." },
+  { id: "verifying", icon: ShieldCheck, title: "Verify each claim", body: "Each claim is checked against the quote it was taken from." },
+  { id: "complete", icon: FileText, title: "Build the report", body: "The report uses checked claims only, each linked to its source." },
 ] as const;
 
 const ORDER = ["pending", "planning", "retrieving", "extracting", "verifying", "followup", "complete"];
@@ -43,13 +43,13 @@ export function Pipeline({ run, running }: { run?: ResearchRun | null; running?:
     <section className={`pipeline ${running ? "running" : "idle"}`} aria-live={running ? "polite" : undefined}>
       <header className="pipeline-head">
         <div>
-          <span className="eyebrow">{running ? "Research in progress" : "How a verified report is built"}</span>
-          <h3>{running ? STEPS.find((s) => stepState(s.id, status) === "active")?.title ?? "Starting" : "Five steps. No claim skips verification."}</h3>
+          <span className="eyebrow">{running ? "Research in progress" : "How a research report is built"}</span>
+          <h3>{running ? STEPS.find((s) => stepState(s.id, status) === "active")?.title ?? "Starting" : "From question to report in five steps"}</h3>
           {running && status === "followup" && <p className="pipeline-note">Evidence was thin somewhere - running a targeted follow-up search.</p>}
         </div>
         {running
           ? <span className="pipeline-time">{fmt(elapsed)} · typically 3–5 min</span>
-          : <span className="pipeline-badge"><BadgeCheck size={14} /> Every claim checked</span>}
+          : <span className="pipeline-badge"><BadgeCheck size={14} /> Claims checked against sources</span>}
       </header>
 
       <div className="pipeline-track" aria-hidden="true"><span style={{ transform: `scaleX(${progress})` }} /></div>

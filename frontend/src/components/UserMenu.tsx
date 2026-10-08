@@ -28,7 +28,7 @@ export function UserMenu({ user, onSignOut }: { user: SessionUser; onSignOut: (n
 
   return (
     <div className="user-menu" ref={ref}>
-      {demo && <span className="demo-pill"><Sparkles size={12} /> Demo session</span>}
+      {demo && <span className="demo-pill">Guest session</span>}
       <button type="button" className="user-trigger" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>
         <span className={`top-avatar ${demo ? "demo" : ""}`}>{demo ? <Sparkles size={14} /> : initials(user.name)}</span>
         <ChevronDown size={14} className={open ? "flip" : ""} />
@@ -36,16 +36,16 @@ export function UserMenu({ user, onSignOut }: { user: SessionUser; onSignOut: (n
       {open && (
         <div className="user-pop" role="menu">
           <div className="user-pop-head">
-            <strong>{demo ? "Guest explorer" : user.name}</strong>
+            <strong>{demo ? "Guest" : user.name}</strong>
             <small>{demo ? `Demo session · ends ${sessionEnds(user)}` : user.email}</small>
           </div>
           {demo && (
             <button type="button" role="menuitem" className="user-pop-item accent" onClick={() => onSignOut("signup")}>
-              <UserPlus size={15} /> Create a free account
+              <UserPlus size={15} /> Create an account
             </button>
           )}
           <button type="button" role="menuitem" className="user-pop-item" onClick={() => onSignOut("signin")}>
-            <LogOut size={15} /> {demo ? "Leave demo" : "Sign out"}
+            <LogOut size={15} /> {demo ? "End guest session" : "Sign out"}
           </button>
         </div>
       )}
