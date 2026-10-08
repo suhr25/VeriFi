@@ -15,7 +15,7 @@ The primary source for the analysis is the company's **DRHP/RHP**, supplemented 
 | IPO type | Mainboard |
 | Issue type | 100% Book Built |
 | IPO dates | 28-30 Sep 2026 |
-| Listing | 6 Oct 2026 |
+| Listing | 6 Oct 2026, NSE and BSE |
 | Face value | ₹5 |
 | Price band | ₹123-130 |
 | IPO price | ₹130 |
@@ -119,12 +119,13 @@ Other income is relatively small compared with operating revenue, which is posit
 
 | ₹ crore | FY24 | FY25 | FY26 |
 |---|---:|---:|---:|
-| EBITDA | 52.12 | 60.96 | **77.31** |
-| EBITDA margin | ~19.2% | ~15.7% | **17.2%** |
+| Operating EBITDA (excluding other income) | 40.99 | 49.80 | **64.77** |
+| Operating EBITDA margin | 15.12% | 12.79% | **14.39%** |
+| EBITDA including other income | 52.12 | 60.96 | 77.31 |
 
-There are different ways databases calculate operating EBITDA, so slightly different margins may appear depending on whether other income and certain operating expenses are included.
+The offer-document basis is operating EBITDA, which excludes other income: ₹64.77 crore in FY26, a 14.39% margin. Figures of ₹77.31 crore (17.2%) seen elsewhere add other income back in and overstate the operating margin.
 
-The important trend: **EBITDA grew faster than revenue in FY26.** That is generally positive. [The Economic Times](https://economictimes.indiatimes.com/srit-india-ltd/profitandlose/companyid-2450206.cms?utm_source=chatgpt.com)
+The important trend: **operating EBITDA grew faster than revenue in FY26** (30.1% vs 15.6%). That is generally positive. [The Economic Times](https://economictimes.indiatimes.com/srit-india-ltd/profitandlose/companyid-2450206.cms?utm_source=chatgpt.com)
 
 ---
 
@@ -229,7 +230,7 @@ Using FY26 PAT of approximately ₹43.29 crore: **IPO P/E ≈ 19.3x**. So invest
 
 # 14. Current valuation after listing
 
-SRIT listed on 6 October 2026. The initial listing was around **₹148** versus IPO price ₹130 — approximately **+13.85%**. [The Economic Times](https://m.economictimes.com/markets/stocks/news/srit-india-shares-to-list-today-gmp-signals-42-premium-over-issue-price/articleshow/134721093.cms?utm_source=chatgpt.com)
+SRIT listed on 6 October 2026. The shares opened at **₹148** on the NSE versus the IPO price of ₹130 — approximately **+13.85%** — and at ₹139.80 on the BSE (+7.54%). [The Economic Times](https://m.economictimes.com/markets/stocks/news/srit-india-shares-to-list-today-gmp-signals-42-premium-over-issue-price/articleshow/134721093.cms?utm_source=chatgpt.com)
 
 Later that day, Business Standard showed SRIT around **₹155.05**, with a market cap around **₹997 crore**. [Business Standard](https://www.business-standard.com/markets/srit-india-ltd-share-price-39853.html?utm_source=chatgpt.com)
 
@@ -237,9 +238,9 @@ At ₹155: approximate market cap ≈ **₹996-997 crore**. Using FY26 PAT: ₹9
 
 | Price | Approx. P/E |
 |---:|---:|
-| ₹123 | ~18.1x |
+| ₹123 | ~18.3x |
 | ₹130 IPO | **~19.3x** |
-| ₹148 listing | ~21.8x |
+| ₹148 listing | ~22.0x |
 | ₹155 | **~23.0x** |
 
 That makes SRIT materially more expensive than it was at IPO.
@@ -282,7 +283,7 @@ Total borrowing:
 
 So debt actually declined from FY25 to FY26. [Value Research Online](https://www.valueresearchonline.com/ipo/389872/srit-india-ltd/?utm_source=chatgpt.com)
 
-Debt/equity: FY24 ~0.31x, FY25 ~0.66x, FY26 **~0.23x**. That is a major improvement. [Equity Research India](https://www.equityresearchindia.com/post/srit-india-ipo-28-sep-30-sep-analysis?utm_source=chatgpt.com)
+Company-reported debt/equity: FY25 0.66x, FY26 **0.23x**. That is a major improvement. Note that these ratios are on the company's total-debt basis; dividing the borrowings shown above by net worth gives lower figures (0.55x and 0.19x), so the borrowings line likely excludes some debt such as lease liabilities. [Equity Research India](https://www.equityresearchindia.com/post/srit-india-ipo-28-sep-30-sep-analysis?utm_source=chatgpt.com)
 
 ---
 
@@ -332,7 +333,7 @@ The primary issue is working capital. SRIT needs to spend money to execute contr
 
 # 22. Working capital
 
-FY26 working capital was approximately **₹150.27 crore**, approximately **34.19% of revenue**, according to the IPO analysis based on the offer documents. [InvestorZone](https://www.investorzone.in/ipo/srit-india-ipo?utm_source=chatgpt.com) That is very high. This explains why SRIT needs such a large IPO allocation for working capital.
+FY26 working capital was approximately **₹150.27 crore** (up from ₹32.93 crore in FY24), about **33% of revenue**, according to the IPO analysis based on the offer documents. [InvestorZone](https://www.investorzone.in/ipo/srit-india-ipo?utm_source=chatgpt.com) That is very high. This explains why SRIT needs such a large IPO allocation for working capital.
 
 ---
 
@@ -359,7 +360,7 @@ Think about a government project: SRIT might win a ₹100 crore contract, need e
 
 # 25. Trade receivables
 
-One source reports trade receivables of approximately **₹23.47 crore** as of March 31, 2026. [Groww](https://groww.in/ipo/srit-india-ipo?utm_source=chatgpt.com) This should not be analysed in isolation because the company also has substantial other current/financial assets. The overall working-capital position is much larger than just trade receivables.
+Government trade receivables were about **₹234.75 crore** at FY26, with a further **₹153.80 crore** of unbilled contract assets - together ₹385.55 crore, roughly 63% of total assets. The collection cycle was about 176 days, down from 233 days in FY24. (A figure of ₹23.47 crore that circulates on some sites is a 10x unit error: a 176-day cycle on ₹450 crore of revenue implies receivables of over ₹200 crore.)
 
 ---
 
@@ -396,7 +397,7 @@ This gives SRIT access to potentially large, long-duration contracts, but create
 
 # 29. Customer concentration
 
-For FY25: Top 3 customers ≈ **71.45%** of revenue. Top 5 ≈ **84.36%**. Top 10 ≈ **92.18%**. [India Infoline](https://www.indiainfoline.com/company/srit-india-ltd/management-discussions?utm_source=chatgpt.com)
+For FY25: Top 3 customers ≈ **71.45%** of revenue. Top 5 ≈ **84.36%**. Top 10 ≈ **92.18%**. In FY26 the top 10 customers were **89.36%** of revenue. [India Infoline](https://www.indiainfoline.com/company/srit-india-ltd/management-discussions?utm_source=chatgpt.com)
 
 That is extremely concentrated. This is not "we have thousands of customers" — it is closer to "we have a relatively small number of large institutional contracts." That dramatically changes the risk profile.
 
@@ -413,15 +414,16 @@ FY25:
 | Healthcare | ₹59.68 Cr | **15.33%** |
 | Total | ₹389.35 Cr | 100% |
 
-In the first six months of FY26, e-Governance became even more dominant:
+FY26:
 
-| Segment | H1 FY26 |
-|---|---:|
-| e-Governance | 77.94% |
-| Telecom | 14.50% |
-| Healthcare | 7.56% |
+| Segment | Revenue | % |
+|---|---:|---:|
+| e-Governance | ₹307.76 Cr | **68.39%** |
+| Telecom & broadband | ₹109.19 Cr | **24.27%** |
+| Healthcare | ₹33.05 Cr | **7.34%** |
+| Total | ₹450.00 Cr | 100% |
 
-So the company is becoming increasingly dependent on government/e-governance projects.
+e-Governance grew from 61% to 68% of revenue in a year, while healthcare fell from 15% to 7%, so the company is becoming increasingly dependent on government/e-governance projects.
 
 ---
 
@@ -483,7 +485,7 @@ As of March 31, 2026: approximately **₹63.38 crore** of contingent liabilities
 
 # 38. MSME dues
 
-Dues to micro and small enterprises increased significantly: the company had 12 creditors and approximately ₹2.34 million dues at September 2025. By March 2026: 53 creditors and approximately ₹291.47 million dues — roughly **₹29.15 crore**. [newboard.in](https://newboard.in/ipo/srit?utm_source=chatgpt.com) This is something to definitely monitor.
+Dues to micro and small enterprises increased significantly: the company had 12 creditors and approximately ₹2.34 million (₹23.4 lakh) dues at September 2025. By March 2026: 53 creditors and approximately ₹291.47 million dues — roughly **₹29.15 crore**. [newboard.in](https://newboard.in/ipo/srit?utm_source=chatgpt.com) This is something to definitely monitor.
 
 ---
 

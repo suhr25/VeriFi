@@ -30,16 +30,17 @@ DATA_DIR = Path(__file__).resolve().parent / "data"
 # as given, not re-derived or estimated.
 
 SRIT_FINANCIALS = [
-    {"period": "FY23", "revenue_cr": 151.85, "ebitda_cr": None, "ebitda_margin_pct": None, "pat_cr": 15.04, "net_margin_pct": None, "eps": 5.55},
-    {"period": "FY24", "revenue_cr": 271.09, "ebitda_cr": 52.12, "ebitda_margin_pct": 19.2, "pat_cr": 29.08, "net_margin_pct": 10.73, "eps": 10.79},
-    {"period": "FY25", "revenue_cr": 389.35, "ebitda_cr": 60.96, "ebitda_margin_pct": 15.7, "pat_cr": 33.60, "net_margin_pct": 8.63, "eps": 8.32},
-    {"period": "FY26", "revenue_cr": 450.00, "ebitda_cr": 77.31, "ebitda_margin_pct": 17.2, "pat_cr": 43.29, "net_margin_pct": 9.62, "eps": 9.12},
+    # Operating EBITDA excludes other income (offer-document basis).
+    {"period": "FY23", "revenue_cr": 151.85, "operating_ebitda_cr": None, "operating_ebitda_margin_pct": None, "pat_cr": 15.04, "net_margin_pct": None, "eps": 5.55},
+    {"period": "FY24", "revenue_cr": 271.09, "operating_ebitda_cr": 40.99, "operating_ebitda_margin_pct": 15.12, "pat_cr": 29.08, "net_margin_pct": 10.73, "eps": 10.79},
+    {"period": "FY25", "revenue_cr": 389.35, "operating_ebitda_cr": 49.80, "operating_ebitda_margin_pct": 12.79, "pat_cr": 33.60, "net_margin_pct": 8.63, "eps": 8.32},
+    {"period": "FY26", "revenue_cr": 450.00, "operating_ebitda_cr": 64.77, "operating_ebitda_margin_pct": 14.39, "pat_cr": 43.29, "net_margin_pct": 9.62, "eps": 9.12},
 ]
 
 SRIT_BALANCE_SHEET = [
-    {"period": "FY24", "total_assets_cr": 428.96, "net_worth_cr": 80.5, "borrowings_cr": 22.28, "debt_equity": 0.31},
+    {"period": "FY24", "total_assets_cr": 428.96, "net_worth_cr": 80.47, "borrowings_cr": 22.28, "debt_equity": None},
     {"period": "FY25", "total_assets_cr": 496.64, "net_worth_cr": 93.2, "borrowings_cr": 51.30, "debt_equity": 0.66},
-    {"period": "FY26", "total_assets_cr": 614.16, "net_worth_cr": 193.3, "borrowings_cr": 36.15, "debt_equity": 0.23},
+    {"period": "FY26", "total_assets_cr": 614.16, "net_worth_cr": 193.27, "borrowings_cr": 36.15, "debt_equity": 0.23},
     {"period": "30 Jun 2026 (consolidated)", "total_assets_cr": None, "net_worth_cr": None, "borrowings_cr": 98.56, "debt_equity": None},
 ]
 
@@ -60,15 +61,15 @@ SRIT_SEGMENTS = [
     {"period": "FY25", "segment": "e-Governance", "revenue_cr": 238.64, "pct": 61.29},
     {"period": "FY25", "segment": "Telecom & broadband", "revenue_cr": 91.03, "pct": 23.38},
     {"period": "FY25", "segment": "Healthcare", "revenue_cr": 59.68, "pct": 15.33},
-    {"period": "H1 FY26", "segment": "e-Governance", "revenue_cr": None, "pct": 77.94},
-    {"period": "H1 FY26", "segment": "Telecom & broadband", "revenue_cr": None, "pct": 14.50},
-    {"period": "H1 FY26", "segment": "Healthcare", "revenue_cr": None, "pct": 7.56},
+    {"period": "FY26", "segment": "e-Governance", "revenue_cr": 307.76, "pct": 68.39},
+    {"period": "FY26", "segment": "Telecom & broadband", "revenue_cr": 109.19, "pct": 24.27},
+    {"period": "FY26", "segment": "Healthcare", "revenue_cr": 33.05, "pct": 7.34},
 ]
 
 SRIT_VALUATION = [
-    {"price": "₹123 (band low)", "market_cap_cr": None, "pe": 18.1},
+    {"price": "₹123 (band low)", "market_cap_cr": 790.5, "pe": 18.3},
     {"price": "₹130 (IPO price)", "market_cap_cr": 835.5, "pe": 19.3},
-    {"price": "₹148 (listing day open)", "market_cap_cr": None, "pe": 21.8},
+    {"price": "₹148 (NSE listing open)", "market_cap_cr": 951.2, "pe": 22.0},
     {"price": "₹155 (listing day, later)", "market_cap_cr": 997, "pe": 23.0},
 ]
 
@@ -85,12 +86,12 @@ SRIT_OBJECTS_OF_ISSUE = [
 
 SRIT_RISK_FACTORS = [
     "Heavy dependence on government contracts (~89% of FY26 revenue) exposes the company to tender delays, payment delays, budget approvals and administrative changes.",
-    "High customer concentration: top 10 customers were ~92% of FY25 revenue; top 3 alone were ~71%.",
-    "Operating cash flow turned negative in FY26 (-₹12.10 Cr) despite PAT of ₹43.29 Cr, driven by a large working-capital requirement (~34% of revenue).",
+    "High customer concentration: top 10 customers were ~89% of FY26 revenue (~92% in FY25); top 3 alone were ~71% in FY25.",
+    "Operating cash flow turned negative in FY26 (-₹12.10 Cr) despite PAT of ₹43.29 Cr: about ₹385 Cr sits in government receivables and unbilled contract assets, with a ~176-day collection cycle.",
     "Order book has declined from ₹1,476.96 Cr (FY24) to ₹1,182.82 Cr (FY26) - existing orders are being converted into revenue faster than new orders are being added.",
     "Consolidated borrowings reported at ~₹98.56 Cr as of 30 June 2026, materially higher than the ₹36.15 Cr reported at FY26 year-end.",
     "Contingent liabilities of ~₹63.38 Cr, including bank guarantees and surety bonds, which could affect cash flow if invoked.",
-    "MSME dues rose sharply: from ~₹2.34 lakh across 12 creditors (Sep 2025) to ~₹29.15 Cr across 53 creditors (Mar 2026).",
+    "MSME dues rose sharply: from ~₹23.4 lakh across 12 creditors (Sep 2025) to ~₹29.15 Cr across 53 creditors (Mar 2026).",
     "Tender-driven, largely L1 (lowest-bidder) pricing environment limits pricing power - the company won only 6 of 43 bids (~14%) in FY26.",
     "Past payment-related legal dispute connected to the Safe Kerala traffic enforcement project.",
     "Revenue growth has slowed sharply, from 43.63% (FY24 to FY25) to 15.57% (FY25 to FY26).",
@@ -108,7 +109,7 @@ SRIT_STRENGTHS = [
 
 SRIT_CONCERNS = [
     "Cash flow: FY26 operating cash flow of -₹12.1 Cr against ₹43.3 Cr PAT - the single biggest concern.",
-    "Working capital of ~₹150 Cr is very high relative to revenue (~34%).",
+    "Working capital of ~₹150 Cr (up from ~₹33 Cr in FY24) is about a third of revenue.",
     "Government dependence: ~89% of revenue.",
     "Customer concentration: top 10 customers ≈92% of FY25 revenue.",
     "Order book declining: ₹1,477 Cr (FY24) → ₹1,183 Cr (FY26).",
@@ -118,6 +119,7 @@ SRIT_CONCERNS = [
 ]
 
 SRIT_VERDICT = {
+    "Source": "Opinion from the third-party write-up this data was taken from - not from the offer document",
     "Business quality": "7/10 - good business, but concentrated and tender-driven",
     "Growth": "8/10 - strong historical growth",
     "Balance sheet": "7.5/10 - FY26 looks good, although June 2026 debt needs monitoring",
@@ -143,7 +145,7 @@ IPOS: list[dict] = [
         "symbol": "SRIT",
         "board": "mainboard",
         "status": "listed",
-        "exchange": "NSE",
+        "exchange": "NSE+BSE",
         "open_date": date(2026, 9, 28),
         "close_date": date(2026, 9, 30),
         "listing_date": date(2026, 10, 6),

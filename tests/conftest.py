@@ -11,6 +11,10 @@ _tmp_db_fd, _tmp_db_path = tempfile.mkstemp(suffix=".db")
 os.close(_tmp_db_fd)
 os.environ["DATABASE_URL"] = f"sqlite:///{_tmp_db_path}"
 os.environ["DEMO_MODE"] = "true"
+# Environment variables override .env, so blanking these keeps the
+# developer's real sign-in credentials out of the test run.
+for _key in ("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "RESEND_API_KEY"):
+    os.environ[_key] = ""
 
 import pytest  # noqa: E402
 
