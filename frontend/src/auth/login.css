@@ -165,6 +165,20 @@
 .vf-fine { display: flex; align-items: flex-start; gap: 6px; margin: 18px 0 0; color: #95a6a2; font-size: 11px; line-height: 1.5; }
 .vf-fine svg { flex: 0 0 auto; margin-top: 2px; }
 
+.vf-google { width: 100%; height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); font-size: 13.5px; font-weight: 600; transition: border-color 180ms ease, box-shadow 180ms ease, transform 160ms var(--ease); }
+.vf-google:hover { border-color: #c7d2cf; box-shadow: 0 8px 20px rgba(16, 34, 43, .08); }
+.vf-google:active { transform: scale(.985); }
+
+.vf-text-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 12px; padding: 4px; color: #6d8680; background: transparent; font-size: 12px; font-weight: 500; transition: color 160ms ease; }
+.vf-text-btn:hover { color: var(--teal-dark); }
+.vf-link-back { margin-top: 16px; }
+
+.vf-link-sent { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 20px 4px 4px; text-align: center; }
+.vf-link-sent svg { color: var(--teal); margin-bottom: 4px; }
+.vf-link-sent strong { font-size: 15px; }
+.vf-link-sent p { margin: 0; color: #6d8680; font-size: 12.5px; line-height: 1.6; }
+.vf-link-sent .vf-text-btn { margin-top: 18px; width: auto; }
+
 /* Entrance */
 .reveal { opacity: 0; transform: translateY(10px); animation: vf-in 700ms var(--ease) forwards; animation-delay: var(--d, 0ms); }
 @keyframes vf-in { to { opacity: 1; transform: none; } }

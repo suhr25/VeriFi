@@ -1,4 +1,13 @@
+"""SQLAlchemy ORM models.
 
+Design choice: each table stores its corresponding Pydantic model as a JSON
+blob (`payload`) plus a handful of indexed columns needed for querying and
+joins. This keeps the storage layer simple (single source of truth is the
+Pydantic schema in app/schemas/, not a parallel hand-maintained ORM schema)
+while still preserving the PRD's required conceptual separation between
+sources / claims / evidence / verification_results / conflicts /
+research_runs / reports as distinct tables.
+"""
 from __future__ import annotations
 
 from datetime import datetime
@@ -101,10 +110,30 @@ class UserORM(Base):
     user_id: Mapped[str] = mapped_column(String, primary_key=True)
     email: Mapped[str] = mapped_column(String, unique=True, index=True)
     name: Mapped[str] = mapped_column(String)
-    password_hash: Mapped[str] = mapped_column(String)
+    # Null for an account that only ever signed in via Google or a magic
+    # link - there is no password to check, and a password-login attempt
+    # against such an account is rejected with a clear message rather than
+    # crashing on a None hash (see app/auth/service.authenticate).
+    password_hash: Mapped[str | None] = mapped_column(String, nullable=True)
     # "viewer" can read and ask; "admin" can also upload and edit data.
     role: Mapped[str] = mapped_column(String, default="viewer", server_default="viewer")
     created_at: Mapped[datetime] = mapped_column(DateTime)
+
+
+class EmailLoginTokenORM(Base):
+    """A one-time magic-link sign-in token. Only its SHA-256 is stored, same
+    principle as SessionORM - a leaked database can't be used to sign in as
+    anyone. Short-lived (see app/auth/service.MAGIC_LINK_MINUTES) and single
+    use (`used`), so a link only works once and only shortly after it was
+    requested."""
+
+    __tablename__ = "email_login_tokens"
+
+    token_hash: Mapped[str] = mapped_column(String, primary_key=True)
+    email: Mapped[str] = mapped_column(String, index=True)
+    used: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
 
 
 class SessionORM(Base):

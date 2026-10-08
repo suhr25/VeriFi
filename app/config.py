@@ -66,6 +66,32 @@ class Settings(BaseSettings):
     demo_session_hours: int = 2
     session_cookie_secure: bool = False
 
+    # Sign in with Google (app/auth/oauth.py). Both unset = the button is
+    # hidden rather than shown broken. Get these from the Google Cloud
+    # Console's OAuth client (type "Web application"), with
+    # {APP_BASE_URL}/api/auth/google/callback added as an authorized
+    # redirect URI.
+    google_client_id: str | None = None
+    google_client_secret: str | None = None
+
+    # Magic-link email sign-in, sent via Resend (app/auth/email.py). Unset =
+    # the "email me a link" option is hidden. RESEND_FROM_EMAIL must be a
+    # sender Resend will let you use - its shared onboarding@resend.dev
+    # address needs no domain verification and works out of the box.
+    resend_api_key: str | None = None
+    resend_from_email: str = "VeriFi <onboarding@resend.dev>"
+
+    # Base URL this server is reachable at - used to build the Google OAuth
+    # redirect URI and the link sent in magic-link emails. Must match what
+    # is registered in the Google Cloud Console exactly (scheme+host+port).
+    app_base_url: str = "http://localhost:8000"
+
+    # Signs the short-lived cookie Authlib uses to hold OAuth state/nonce
+    # during the Google redirect round-trip (not the session cookie itself).
+    # A random value generated at process start is fine - the whole
+    # round-trip completes in seconds, well within one process's lifetime.
+    oauth_state_secret: str | None = None
+
     # App
     app_host: str = "0.0.0.0"
     app_port: int = 8000
@@ -86,6 +112,14 @@ class Settings(BaseSettings):
     @property
     def alphavantage_available(self) -> bool:
         return bool(self.alphavantage_api_key)
+
+    @property
+    def google_oauth_available(self) -> bool:
+        return bool(self.google_client_id and self.google_client_secret)
+
+    @property
+    def resend_available(self) -> bool:
+        return bool(self.resend_api_key)
 
     @property
     def effective_demo_mode(self) -> bool:

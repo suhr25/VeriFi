@@ -109,3 +109,71 @@ def test_public_overview_is_real_report_data_without_market_data():
     assert not {"price", "previous_close"} & set(first)
     assert not {"price_date", "total_market_cap"} & set(body)
     assert all("price" not in k["label"].lower() for k in first["checks"])
+
+
+# ---- Google / magic-link: the parts testable without real external credentials --------
+
+
+def test_public_overview_reports_signin_methods_unconfigured_by_default():
+    # The test environment sets neither GOOGLE_CLIENT_ID/SECRET nor
+    # RESEND_API_KEY (conftest.py), so both buttons should report as hidden.
+    body = TestClient(app).get("/api/public/overview").json()
+    assert body["google_signin_available"] is False
+    assert body["email_signin_available"] is False
+
+
+def test_google_login_404s_when_not_configured():
+    assert TestClient(app).get("/api/auth/google/login", follow_redirects=False).status_code == 404
+
+
+def test_magic_link_request_503s_when_resend_not_configured():
+    resp = TestClient(app).post("/api/auth/magic-link", json={"email": _email()})
+    assert resp.status_code == 503
+
+
+def test_get_or_create_user_by_email_reuses_the_same_account(db_session):
+    email = _email()
+    first = service.get_or_create_user_by_email(db_session, email, "Asha")
+    second = service.get_or_create_user_by_email(db_session, email.upper(), "Different Name")
+    assert first.user_id == second.user_id  # same account, found by normalized email
+    assert first.password_hash is None  # no password - this account was never given one
+
+
+def test_password_login_rejected_with_a_clear_message_for_an_oauth_only_account(db_session):
+    email = _email()
+    service.get_or_create_user_by_email(db_session, email, "Asha")
+    with pytest.raises(service.AuthError, match="Google or email sign-in"):
+        service.authenticate(db_session, email, "any-password-at-all")
+
+
+def test_magic_link_token_is_single_use(db_session):
+    email = _email()
+    token = service.create_login_link_token(db_session, email)
+    assert service.consume_login_link_token(db_session, token) == email
+    with pytest.raises(service.AuthError):
+        service.consume_login_link_token(db_session, token)  # second use rejected
+
+
+def test_magic_link_token_rejects_an_unknown_token(db_session):
+    with pytest.raises(service.AuthError):
+        service.consume_login_link_token(db_session, "not-a-real-token")
+
+
+def test_magic_link_callback_rejects_an_unknown_token():
+    resp = TestClient(app).get("/api/auth/magic-link/callback", params={"token": "bogus"}, follow_redirects=False)
+    assert resp.status_code in (302, 307)
+    assert "auth_error" in resp.headers["location"]
+
+
+def test_magic_link_token_expires(db_session):
+    from datetime import timedelta
+
+    from app.storage.models import EmailLoginTokenORM
+
+    email = _email()
+    token = service.create_login_link_token(db_session, email)
+    row = db_session.get(EmailLoginTokenORM, service._hash_token(token))
+    row.expires_at = service._now() - timedelta(minutes=1)
+    db_session.commit()
+    with pytest.raises(service.AuthError):
+        service.consume_login_link_token(db_session, token)

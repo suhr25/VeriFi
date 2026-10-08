@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import secrets
 import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -8,6 +9,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
 
 from fastapi import Depends
 
@@ -49,6 +51,11 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Financial Research Agent", version="0.1.0", lifespan=lifespan)
+
+# Authlib's Google OAuth flow stores short-lived state/nonce in a signed
+# cookie via Starlette's session - unrelated to VeriFi's own session cookie
+# (app/auth/service.py), which stays a custom HttpOnly token either way.
+app.add_middleware(SessionMiddleware, secret_key=settings.oauth_state_secret or secrets.token_hex(32))
 
 app.include_router(public_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")

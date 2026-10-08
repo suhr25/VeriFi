@@ -297,6 +297,8 @@ export const authApi = {
   signup: (name: string, email: string, password: string) => postJson<SessionUser>("/api/auth/signup", { name, email, password }),
   demo: () => postJson<SessionUser>("/api/auth/demo"),
   logout: () => postJson<null>("/api/auth/logout"),
+  // Google is a full-page redirect, not a fetch - see LoginPage's <a href>.
+  sendMagicLink: (email: string) => postJson<{ sent: true }>("/api/auth/magic-link", { email }),
 };
 
 export interface OverviewCompany {
@@ -316,6 +318,8 @@ export interface PublicOverview {
   mode?: "live" | "demo";
   verified?: number;
   companies: OverviewCompany[];
+  google_signin_available: boolean;
+  email_signin_available: boolean;
 }
 
 export const publicApi = {

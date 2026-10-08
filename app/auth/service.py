@@ -26,11 +26,12 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.storage.models import SessionORM, UserORM
+from app.storage.models import EmailLoginTokenORM, SessionORM, UserORM
 
 SESSION_COOKIE = "verifi_session"
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 MIN_PASSWORD_LENGTH = 8
+MAGIC_LINK_MINUTES = 15
 
 _SCRYPT = {"n": 2**14, "r": 8, "p": 1, "dklen": 32}
 
@@ -136,11 +137,65 @@ def authenticate(db: Session, email: str, password: str) -> UserORM:
     if len(_recent_failures(email)) >= _MAX_FAILURES:
         raise AuthError("Too many failed attempts. Please wait a few minutes and try again.", status=429)
     user = db.scalar(select(UserORM).where(UserORM.email == email))
+    # An account created via Google or a magic link has no password at all -
+    # distinct from a wrong password, so it gets its own clear message
+    # rather than failing a verify_password(password, None) call.
+    if user and user.password_hash is None:
+        raise AuthError("This account uses Google or email sign-in - there's no password to check. Use one of those instead.", status=401)
     ok = verify_password(password, user.password_hash if user else _DUMMY_HASH)
     if not user or not ok:
         _record_failure(email)
         raise AuthError("Incorrect email or password.", status=401)
     return user
+
+
+# ---- Google / magic-link: find-or-create by verified email --------------------
+
+
+def get_or_create_user_by_email(db: Session, email: str, name: str | None = None) -> UserORM:
+    """Used by both the Google OAuth callback and the magic-link callback -
+    either path has already verified the caller controls this email address
+    (Google via its own identity check, a magic link via proof of inbox
+    access), so the same account is reused across sign-in methods rather
+    than creating a duplicate. A first-time sign-in creates the account on
+    the spot, with no password (see authenticate above)."""
+    email = normalize_email(email)
+    user = db.scalar(select(UserORM).where(UserORM.email == email))
+    if user:
+        return user
+    display_name = (name or email.split("@")[0]).strip()[:80] or "there"
+    user = UserORM(user_id=f"usr_{uuid.uuid4().hex[:16]}", email=email, name=display_name,
+                   password_hash=None, created_at=_now())
+    db.add(user)
+    db.commit()
+    return user
+
+
+# ---- Magic-link tokens ----------------------------------------------------------
+
+
+def create_login_link_token(db: Session, email: str) -> str:
+    email = normalize_email(email)
+    if not EMAIL_RE.match(email) or len(email) > 254:
+        raise AuthError("Please enter a valid email address.")
+    token = secrets.token_urlsafe(32)
+    db.add(EmailLoginTokenORM(token_hash=_hash_token(token), email=email, created_at=_now(),
+                              expires_at=_now() + timedelta(minutes=MAGIC_LINK_MINUTES)))
+    db.execute(delete(EmailLoginTokenORM).where(EmailLoginTokenORM.expires_at < _now()))
+    db.commit()
+    return token
+
+
+def consume_login_link_token(db: Session, token: str) -> str:
+    """Validates and burns a magic-link token, returning the email it was
+    issued for. Raises AuthError if missing, expired, or already used -
+    each token works exactly once."""
+    row = db.get(EmailLoginTokenORM, _hash_token(token))
+    if row is None or row.used or row.expires_at < _now():
+        raise AuthError("This sign-in link is invalid or has expired. Request a new one.", status=401)
+    row.used = True
+    db.commit()
+    return row.email
 
 
 # ---- Sessions -------------------------------------------------------------------

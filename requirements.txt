@@ -12,6 +12,8 @@ yfinance==1.7.0
 curl_cffi==0.16.3
 python-dotenv==1.0.1
 python-multipart==0.0.20
+authlib==1.8.0
+itsdangerous==2.2.0
 pytest==8.3.4
 pytest-asyncio==0.25.2
 langchain-text-splitters==1.1.2

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import {
-  AlertTriangle, ArrowRight, BadgeCheck, Building2, Eye, EyeOff, FileText, Layers, LoaderCircle, Lock, Mail,
-  ScanSearch, ShieldCheck, Sparkles, User,
+  AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, Building2, CheckCircle2, Eye, EyeOff, FileText, Layers,
+  LoaderCircle, Lock, Mail, ScanSearch, Send, ShieldCheck, Sparkles, User,
 } from "lucide-react";
 import { authApi, publicApi, type OverviewCompany, type PublicOverview, type SessionUser } from "../services/api";
 import { BrandMark } from "../components/Brand";
@@ -26,7 +26,10 @@ export function LoginPage({ onAuthenticated, initialMode = "signin" }: { onAuthe
   const [overview, setOverview] = useState<PublicOverview | null>(null);
   const [leaving, setLeaving] = useState(false);
 
-  useEffect(() => { publicApi.overview().then(setOverview).catch(() => setOverview({ companies: [] })); }, []);
+  useEffect(() => {
+    publicApi.overview().then(setOverview)
+      .catch(() => setOverview({ companies: [], google_signin_available: false, email_signin_available: false }));
+  }, []);
 
   const spotlight = (e: React.MouseEvent<HTMLElement>) => {
     const box = e.currentTarget.getBoundingClientRect();
@@ -88,7 +91,7 @@ export function LoginPage({ onAuthenticated, initialMode = "signin" }: { onAuthe
           <BrandMark size={30} />
           <div><strong>Veri<span>Fi</span></strong><small>Every Number Has a Story.</small></div>
         </div>
-        <AuthCard initialMode={initialMode} onDone={finish} />
+        <AuthCard initialMode={initialMode} onDone={finish} overview={overview} />
       </section>
     </div>
   );
@@ -215,7 +218,21 @@ function StoryBody({ company }: { company: OverviewCompany }) {
 
 // ---- Auth card -----------------------------------------------------------------------------
 
-function AuthCard({ initialMode, onDone }: { initialMode: Mode; onDone: (u: SessionUser) => void }) {
+/** Lucide has no brand logos (by design); Google's own 4-colour "G" mark,
+ * reproduced at the size Google's branding guidelines call for next to
+ * "Continue with Google" text. */
+function GoogleMark({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 18 18" aria-hidden="true">
+      <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.87 2.7-6.62Z" />
+      <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.95v2.33A9 9 0 0 0 9 18Z" />
+      <path fill="#FBBC05" d="M3.95 10.7a5.4 5.4 0 0 1 0-3.4V4.97H.95a9 9 0 0 0 0 8.06l3-2.33Z" />
+      <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.46 3.44 1.35l2.58-2.58A9 9 0 0 0 .95 4.97l3 2.33C4.66 5.17 6.65 3.58 9 3.58Z" />
+    </svg>
+  );
+}
+
+function AuthCard({ initialMode, onDone, overview }: { initialMode: Mode; onDone: (u: SessionUser) => void; overview: PublicOverview | null }) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -224,6 +241,10 @@ function AuthCard({ initialMode, onDone }: { initialMode: Mode; onDone: (u: Sess
   const [capsLock, setCapsLock] = useState(false);
   const [busy, setBusy] = useState<"form" | "demo" | null>(null);
   const [error, setError] = useState("");
+  const [linkMode, setLinkMode] = useState(false);
+  const [linkBusy, setLinkBusy] = useState(false);
+  const [linkSent, setLinkSent] = useState(false);
+  const [linkError, setLinkError] = useState("");
   const firstField = useRef<HTMLInputElement>(null);
 
   const switched = useRef(false);
@@ -256,12 +277,70 @@ function AuthCard({ initialMode, onDone }: { initialMode: Mode; onDone: (u: Sess
     }
   };
 
+  const sendLink = async (event: FormEvent) => {
+    event.preventDefault();
+    if (linkBusy || !email.trim()) return;
+    setLinkBusy(true); setLinkError("");
+    try {
+      await authApi.sendMagicLink(email.trim());
+      setLinkSent(true);
+    } catch (cause) {
+      setLinkError(cause instanceof Error ? cause.message : String(cause));
+    } finally { setLinkBusy(false); }
+  };
+
   const strength = password.length === 0 ? 0 : password.length < 8 ? 1 : /[^A-Za-z0-9]/.test(password) && password.length >= 12 ? 3 : 2;
+  const showGoogle = overview?.google_signin_available ?? false;
+  const showEmailLink = overview?.email_signin_available ?? false;
+
+  if (linkMode) {
+    return (
+      <div className="vf-card reveal" style={{ ["--d" as string]: "120ms" }}>
+        <h2>Email me a sign-in link</h2>
+        <p className="vf-card-sub">No password needed - we'll email you a one-time link.</p>
+        {linkSent ? (
+          <div className="vf-link-sent">
+            <CheckCircle2 size={30} />
+            <strong>Check your inbox</strong>
+            <p>We sent a sign-in link to <b>{email}</b>. It expires in 15 minutes and works once.</p>
+            <button type="button" className="vf-text-btn" onClick={() => { setLinkMode(false); setLinkSent(false); setLinkError(""); }}>
+              <ArrowLeft size={14} /> Back to sign in
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={sendLink}>
+            <label className="vf-field">
+              <span>Email</span>
+              <div className="vf-input"><Mail size={16} /><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required placeholder="you@example.com" autoFocus /></div>
+            </label>
+            <div className="vf-error" role="alert" aria-live="assertive">
+              {linkError && <><AlertTriangle size={15} /><span>{linkError}</span></>}
+            </div>
+            <button type="submit" className="vf-primary" disabled={linkBusy || !email.trim()}>
+              {linkBusy ? <LoaderCircle size={17} className="spin" /> : <Send size={16} />} Send sign-in link
+            </button>
+            <button type="button" className="vf-text-btn vf-link-back" onClick={() => { setLinkMode(false); setLinkError(""); }}>
+              <ArrowLeft size={14} /> Back to password sign-in
+            </button>
+          </form>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="vf-card reveal" style={{ ["--d" as string]: "120ms" }}>
       <h2>{mode === "signin" ? "Welcome back" : "Create your account"}</h2>
       <p className="vf-card-sub">{mode === "signin" ? "Sign in to your research workspace." : "Free, and takes ten seconds."}</p>
+
+      {showGoogle && (
+        <>
+          <a className="vf-google" href="/api/auth/google/login">
+            <GoogleMark /> Continue with Google
+          </a>
+          <div className="vf-or"><span>or</span></div>
+        </>
+      )}
 
       <div className="vf-seg" role="tablist" aria-label="Sign in or create account">
         <span className="vf-seg-pill" style={{ transform: `translateX(${mode === "signin" ? 0 : 100}%)` }} aria-hidden="true" />
@@ -310,6 +389,12 @@ function AuthCard({ initialMode, onDone }: { initialMode: Mode; onDone: (u: Sess
           {mode === "signin" ? "Sign in" : "Create account"}
           {busy !== "form" && <ArrowRight size={16} className="vf-arrow" />}
         </button>
+
+        {showEmailLink && mode === "signin" && (
+          <button type="button" className="vf-text-btn vf-link-toggle" onClick={() => { setLinkMode(true); setError(""); }}>
+            <Mail size={13} /> Email me a sign-in link instead
+          </button>
+        )}
       </form>
 
       <div className="vf-or"><span>or</span></div>

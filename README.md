@@ -177,6 +177,47 @@ each company's share of industry revenue. It makes no LLM calls and uses no mark
 
 API: `GET /api/industries`, `GET /api/industries/{id}[?refresh=true]`.
 
+## IPO Centre
+
+Upcoming and recently-listed **mainboard IPOs**, each with its full official report and a
+search bar that answers questions strictly from that report - never from the LLM's general
+knowledge, and never by estimating a figure the document doesn't state.
+
+There is no reliable free API for Indian IPO prospectuses, so unlike the Industry Dashboard
+(synced automatically from exchange filings), IPO data is **deliberately curated by hand**:
+listing details and the full DRHP/RHP/report text are supplied by the team and stored via
+`scripts/seed_ipo.py`, which upserts one IPO's row by `ipo_id` (safe to re-run as figures are
+corrected or a new IPO is added). Every number shown traces to that stored report text - none
+is scraped, inferred, or backfilled from memory.
+
+**Schema** (`IpoORM`, `app/storage/models.py`): fixed, indexed columns for listing mechanics
+(symbol, board, status, exchange, dates, price band, lot size, issue size, registrar, lead
+managers) plus two freeform fields:
+- `report_text` - the full report, stored verbatim. The *only* thing the Ask box is allowed
+  to answer from.
+- `payload` (JSON) - structured sections (financials, balance sheet, cash flow, order book,
+  segment revenue, valuation, subscription, objects of issue, strengths, concerns, risk
+  factors, verdict) that render as tabs on the IPO's detail page. A section's shape varies
+  IPO to IPO, so the frontend renders each payload key generically (array of objects → table,
+  array of strings → list, object → key/value grid) rather than hardcoding a fixed layout.
+
+**The Ask endpoint reuses the research pipeline's RAG module** (`app/rag/indexer.py`, see
+section 4) rather than a separate implementation: the same report chunking, local embeddings,
+and FAISS similarity search used to pick relevant excerpts for the Claim Extractor is used
+here to find the excerpt most relevant to the question asked, which the LLM is then
+instructed to answer from *only* - stating plainly that the report doesn't mention something
+rather than guessing. If no LLM is configured, the raw excerpt is shown instead of a
+fabricated sentence, so the box is never silently wrong.
+
+Two performance details worth knowing, since loading the embedding model is CPU-bound and can
+take over a minute on a modest machine: it is warmed up once in a background thread at server
+startup (`app/main.py`, alongside the existing industry-data background refresh) rather than
+on the first real question, and the FAISS index for a given report is cached by a hash of its
+text (`app/rag/indexer.py:_store_cache`) so a second question about the same IPO reuses it
+instead of re-chunking and re-embedding the same document from scratch.
+
+API: `GET /api/ipos[?board=mainboard]`, `GET /api/ipos/{id}`, `POST /api/ipos/{id}/ask`.
+
 ## 4. Retrieval-Augmented Generation
 
 RAG is used specifically for **claim extraction from long source documents**, not as a
@@ -241,28 +282,62 @@ previous prefix-truncation behaviour rather than failing the whole pipeline
 ```
 financial-research-agent/
 ├── app/
-│   ├── api/routes.py            # FastAPI endpoints
-│   ├── agents/                  # query_planner, research_orchestrator, followup_research
+│   ├── api/routes.py             # FastAPI endpoints: research, answer, industries, ipos
+│   ├── auth/                     # accounts, sessions, demo mode (routes.py, service.py)
+│   ├── agents/                   # query_planner, research_orchestrator, followup_research
 │   ├── retrieval/                # base, company_resolver, web_search, sec_edgar, financial_data, source_retriever
 │   ├── extraction/claim_extractor.py
-│   ├── verification/             # verification_engine, numeric_matcher, entailment_checker
-│   ├── analysis/                 # normalizer, conflict_detector, confidence_scorer
+│   ├── verification/              # verification_engine, numeric_matcher, entailment_checker
+│   ├── analysis/                  # normalizer, conflict_detector, confidence_scorer
 │   ├── generation/report_generator.py
-│   ├── storage/                  # database, models, repositories
-│   ├── llm/                      # LLMProvider + Groq/OpenAI implementations
-│   ├── rag/                      # LangChain chunking/embeddings/FAISS retrieval (see section 4)
-│   ├── schemas/                  # canonical Pydantic models
+│   ├── answer/                    # deterministic database-first answers (intent.py, service.py)
+│   ├── industry/                  # industry dashboard: universe, nse sync, analytics, service
+│   ├── datastore/                 # writes/reads filings to the financial_facts store (store.py, sync.py)
+│   ├── storage/                   # database (Postgres/SQLite engine), models, repositories
+│   ├── llm/                       # LLMProvider + Groq/OpenAI implementations
+│   ├── rag/                       # LangChain chunking/embeddings/FAISS retrieval (see section 4)
+│   ├── schemas/                   # canonical Pydantic models (incl. ipo.py)
 │   └── config.py
-├── frontend/                     # index.html, style.css, app.js,React 18 + TypeScript + Vite
-├── tests/                        # pytest: unit + integration + adversarial + e2e
-├── evaluation/                   # hand-labelled eval sets, calibration, run_evaluation.py
-├── sample_data/                  # bundled company directory + mock fixtures
+├── frontend/src/
+│   ├── auth/                      # LoginPage
+│   ├── industry/                  # Industry Dashboard view + charts
+│   ├── ipo/                       # IPO Centre: list view, detail view, Ask panel
+│   ├── research/                  # verified deep-dive pipeline UI (Pipeline, DatabaseAnswer)
+│   ├── components/                # Sidebar, Tabs, UserMenu, Brand
+│   └── services/api.ts            # typed fetch client for every endpoint above
+├── migrations/versions/           # Alembic schema history
+├── scripts/
+│   ├── seed_ipo.py                # upsert one IPO's listing details + report text
+│   ├── data/                      # source report text seed_ipo.py reads from
+│   └── dev.ps1 / dev.sh           # start the Postgres container + backend together
+├── tests/                         # pytest: unit + integration + adversarial + e2e
+├── evaluation/                    # hand-labelled eval sets, calibration, run_evaluation.py
+├── sample_data/                   # bundled company directory + mock fixtures + filings seed
 ├── Dockerfile / docker-compose.yml
 ├── requirements.txt
 └── .env.example
 ```
 
 ## 6. Setup
+
+The fastest path is the dev script - it creates the virtualenv, installs dependencies,
+copies `.env.example` to `.env` on first run, starts the Postgres container if `DATABASE_URL`
+points at one, and launches the backend with schema migrations applied automatically:
+
+```powershell
+.\scripts\dev.ps1     # Windows
+```
+```bash
+./scripts/dev.sh      # macOS/Linux
+```
+
+Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/) running if
+`DATABASE_URL` is a `postgresql://` URL (the default in `.env.example`) - the script starts
+`docker compose up -d --wait db` for you, but Docker itself has to already be running. Without
+Docker, set `DATABASE_URL=sqlite:///./data/financial_research_agent.db` in `.env` instead and
+the app runs with zero external services.
+
+To set it up by hand instead:
 
 ```bash
 cd financial-research-agent
@@ -271,6 +346,7 @@ python -m venv .venv
 # source .venv/bin/activate   # macOS/Linux
 pip install -r requirements.txt
 copy .env.example .env        # Windows: copy, macOS/Linux: cp
+docker compose up -d --wait db   # only if DATABASE_URL is postgresql://
 ```
 
 `requirements.txt` includes the RAG stack (`sentence-transformers` + `torch`), so first
@@ -303,11 +379,18 @@ cd frontend
 npm install
 npm run build
 cd ..
+docker compose up -d --wait db   # if DATABASE_URL is postgresql:// - see section 6
 uvicorn app.main:app --reload --port 8000
 ```
 
+(`scripts/dev.ps1` / `scripts/dev.sh` do all of this in one command - see section 6.)
+
 Open `http://localhost:8000` for the web UI, or `http://localhost:8000/docs` for the
 interactive API docs.
+
+If the backend can't reach the database, `uvicorn` will appear to hang right after the
+Alembic log lines instead of failing fast - that almost always means Docker Desktop isn't
+running. Start it, then run `docker compose up -d db` and retry.
 
 For frontend-only development with hot reload, run the backend on port 8000 and then:
 
@@ -320,13 +403,20 @@ The Vite dev server proxies `/api` requests to `http://localhost:8000`.
 
 ## 8. Running with Docker
 
+`docker-compose.yml` defines two services: `db` (Postgres 16 + pgvector, the usual way to run
+it - see "Database: the source of truth" above) and `app` (the backend itself, optional -
+most local development runs the backend directly with `uvicorn` instead, for `--reload`).
+
 ```bash
 copy .env.example .env   # edit in real API keys if you have them, otherwise leave as-is
-docker compose up --build
+docker compose up -d db        # database only (the common case)
+# docker compose up --build    # database + the backend, both containerized
 ```
 
-The app is available at `http://localhost:8000`. The SQLite database persists in `./data`
-via a bind mount.
+The app is available at `http://localhost:8000`. Postgres data persists in the `verifi_pgdata`
+Docker volume, independent of the containers themselves - removing a container never removes
+the data. SQLite remains available as a zero-setup fallback (`DATABASE_URL=sqlite:///...`);
+in that mode the database file lives at `./data/financial_research_agent.db`.
 
 ## 9. Demo Mode
 
@@ -350,15 +440,26 @@ still tagged with its provider's normal tier, since it succeeded).
 
 ## 10. API
 
+All endpoints below except `/api/health`, `/api/public/overview` and `/api/auth/*` require a
+signed-in or demo session (see "Sign-in and Demo Mode").
+
 | Endpoint | Description |
 |---|---|
+| `POST /api/answer` | Database-first: answers a question in milliseconds straight from stored, verified filings if VeriFi already holds the companies asked about; `answered: false` otherwise, with a `reason` the frontend uses to decide whether to fall back to full research |
 | `POST /api/research` | Queues a research run; returns `202` immediately with a `research_run_id` (the pipeline runs in the background) |
 | `GET /api/research/{id}` | Fetch a run's live status/plan - poll this until `complete` or `failed` |
 | `GET /api/research/{id}/claims` | All extracted + verified claims |
 | `GET /api/research/{id}/sources` | All retrieved sources (with full text + provenance) |
 | `GET /api/research/{id}/conflicts` | Detected conflicts between sources |
 | `GET /api/research/{id}/report` | The generated structured report |
+| `GET /api/industries` | List of industry dashboards (e.g. NIFTY IT) |
+| `GET /api/industries/{id}[?refresh=true]` | One industry's peer metrics, consistency checks and revenue-share aggregates |
+| `GET /api/ipos[?board=mainboard]` | List of IPOs (mainboard by default) |
+| `GET /api/ipos/{id}` | One IPO's full listing details and structured report sections |
+| `POST /api/ipos/{id}/ask` | Answers a free-text question strictly from that IPO's stored report text (see "IPO Centre") |
 | `GET /api/health` | Health check + current provider/mode configuration |
+| `GET /api/public/overview` | Unauthenticated snapshot used by the login page itself |
+| `POST /api/auth/login` / `/signup` / `/demo` / `/logout` | Account and demo-session management |
 
 ### Example queries
 
@@ -489,6 +590,11 @@ evidence text, with no report context at all.
   Reliance Industries) will have gaps in primary-filing and financial-API coverage and rely
   more heavily on web search results, which the system surfaces transparently as fewer
   sources rather than failing.
+- **IPO Centre data is manually curated, not synced**: there is no reliable free API for
+  Indian IPO prospectuses, so unlike the Industry Dashboard, an IPO only appears once its
+  listing details and report text are deliberately added via `scripts/seed_ipo.py`. The Ask
+  box is only as complete as the report text it was given - a question about a detail the
+  stored report doesn't cover is correctly answered "not mentioned," not guessed.
 
 ## 16. Observability
 
