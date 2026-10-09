@@ -403,6 +403,9 @@ The Vite dev server proxies `/api` requests to `http://localhost:8000`.
 
 ## 8. Running with Docker
 
+For production hosting on Render (Blueprint, environment variables, database
+seeding, troubleshooting), see **[DEPLOYMENT.md](DEPLOYMENT.md)**.
+
 `docker-compose.yml` defines two services: `db` (Postgres 16 + pgvector, the usual way to run
 it - see "Database: the source of truth" above) and `app` (the backend itself, optional -
 most local development runs the backend directly with `uvicorn` instead, for `--reload`).

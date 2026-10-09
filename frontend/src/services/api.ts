@@ -132,15 +132,28 @@ export interface HealthResponse {
 
 export const UNAUTHORIZED_EVENT = "verifi:unauthorized";
 
-const BACKEND_DOWN = "Can't reach the backend server. Start it with .\\scripts\\dev.ps1 (port 8000), then retry.";
+/** Empty (the default) = same origin: the backend serves this frontend.
+ * Set VITE_API_BASE_URL only when the frontend is hosted separately, e.g.
+ * "https://verifi-api.onrender.com". Public by design - never put a secret
+ * in a VITE_ variable. */
+export const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/+$/, "");
+const CROSS_ORIGIN = API_BASE !== "";
+export const apiUrl = (path: string) => `${API_BASE}${path}`;
 
-async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
+const BACKEND_DOWN = import.meta.env.DEV
+  ? "Can't reach the backend server. Start it with .\\scripts\\dev.ps1 (port 8000), then retry."
+  : "VeriFi's server isn't responding. If it was idle it may be waking up - please retry in a minute.";
+
+async function fetchJson<T>(path: string, options?: RequestInit): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(url, options);
+    // The session is an HttpOnly cookie, so a separately hosted frontend
+    // must send credentials explicitly; same-origin requests send it anyway.
+    response = await fetch(apiUrl(path), CROSS_ORIGIN ? { credentials: "include", ...options } : options);
   } catch {
     throw new Error(BACKEND_DOWN);
   }
+  const url = path;
   const data = response.status === 204 ? null : await response.json().catch(() => null);
   if (!response.ok) {
     // An expired or missing session anywhere in the app sends the user back

@@ -2,7 +2,14 @@
 __pycache__/
 *.pyc
 .pytest_cache/
-data/*.db
-evaluation/results/
 .git/
 .env
+.env.*
+!.env.example
+data/
+evaluation/results/
+frontend/node_modules/
+frontend/dist/
+frontend/tsconfig.tsbuildinfo
+.claude/
+*.log

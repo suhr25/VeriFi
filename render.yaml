@@ -1,0 +1,116 @@
+# Render Blueprint for VeriFi. See DEPLOYMENT.md for the full walkthrough.
+#
+# One web service (the Docker image builds the React frontend and serves it
+# from the FastAPI backend, so the browser talks to a single origin and the
+# HttpOnly session cookie just works) plus one managed PostgreSQL database.
+#
+# Secrets are declared with `sync: false`: Render asks for their values when
+# the Blueprint is created and never reads them from this file.
+
+databases:
+  - name: verifi-db
+    plan: free                 # free Postgres expires after 30 days - see DEPLOYMENT.md
+    region: singapore
+    databaseName: verifi
+    user: verifi
+    postgresMajorVersion: "16"
+
+services:
+  - type: web
+    name: verifi
+    runtime: docker
+    plan: free                 # 512 MB: keep RAG_ENABLED=false here (see below)
+    region: singapore          # closest Render region to NSE and Indian users
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      # ---- Database (migrations run automatically on startup) ----
+      - key: DATABASE_URL
+        fromDatabase:
+          name: verifi-db
+          property: connectionString
+
+      # ---- Mode and sessions ----
+      - key: DEMO_MODE
+        value: "false"
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: OAUTH_STATE_SECRET
+        generateValue: true
+      - key: LOG_LEVEL
+        value: INFO
+      # Embedding model for RAG needs ~700 MB RAM. Set to "true" only on a
+      # plan with at least 2 GB (Render "Standard").
+      - key: RAG_ENABLED
+        value: "false"
+
+      # ---- LLM (required for live research; without a key the app runs
+      #      the research pipeline in labelled demo mode) ----
+      - key: LLM_PROVIDER
+        value: groq
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-20b
+      - key: LLM_TPM_LIMIT
+        value: "7000"
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+
+      # ---- Web search and financial data ----
+      - key: SEARCH_PROVIDER
+        value: serpapi
+      - key: SERPAPI_API_KEY
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: ALPHAVANTAGE_API_KEY
+        sync: false
+      - key: SEC_EDGAR_USER_AGENT
+        sync: false            # e.g. "VeriFi research you@example.com" (SEC fair-access policy)
+
+      # ---- Research loop limits ----
+      - key: MAX_FOLLOWUP_ITERATIONS
+        value: "0"
+      - key: MAX_SUBQUERIES_PER_PLAN
+        value: "4"
+
+      # ---- Sign-in (optional; each option is hidden when unset) ----
+      # APP_BASE_URL defaults to this service's own Render URL
+      # (RENDER_EXTERNAL_URL). Set it only for a custom domain.
+      - key: APP_BASE_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        value: VeriFi <onboarding@resend.dev>
+
+# ---------------------------------------------------------------------------
+# Optional: frontend as a separate Static Site. Not needed for the setup
+# above. Read "Option B" in DEPLOYMENT.md first - a frontend on another
+# *.onrender.com host relies on third-party cookies, which some browsers
+# block. To use it, uncomment, and set on the web service:
+#   CORS_ORIGINS=https://verifi-web.onrender.com
+#   FRONTEND_URL=https://verifi-web.onrender.com
+#   SESSION_COOKIE_SAMESITE=none
+#
+#  - type: web
+#    name: verifi-web
+#    runtime: static
+#    rootDir: frontend
+#    buildCommand: npm ci && npm run build
+#    staticPublishPath: dist
+#    envVars:
+#      - key: VITE_API_BASE_URL
+#        value: https://verifi.onrender.com
+#    routes:
+#      - type: rewrite
+#        source: /*
+#        destination: /index.html
+# ---------------------------------------------------------------------------

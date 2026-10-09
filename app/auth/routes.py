@@ -63,11 +63,17 @@ class Me(BaseModel):
     expires_at: datetime
 
 
+def _cookie_policy() -> dict:
+    settings = get_settings()
+    # Browsers reject SameSite=None cookies that aren't Secure.
+    secure = settings.session_cookie_secure or settings.session_cookie_samesite == "none"
+    return {"httponly": True, "samesite": settings.session_cookie_samesite, "secure": secure, "path": "/"}
+
+
 def _set_cookie(response: Response, token: str, expires: datetime) -> None:
     response.set_cookie(
         service.SESSION_COOKIE, token,
-        max_age=int((expires - service._now()).total_seconds()),
-        httponly=True, samesite="lax", secure=get_settings().session_cookie_secure, path="/",
+        max_age=int((expires - service._now()).total_seconds()), **_cookie_policy(),
     )
 
 
@@ -109,7 +115,7 @@ def demo(response: Response, db: Session = Depends(db_session)):
 @auth_router.post("/logout", status_code=204)
 def logout(request: Request, response: Response, db: Session = Depends(db_session)):
     service.end_session(db, request.cookies.get(service.SESSION_COOKIE))
-    response.delete_cookie(service.SESSION_COOKIE, path="/")
+    response.delete_cookie(service.SESSION_COOKIE, **_cookie_policy())
 
 
 @auth_router.get("/me", response_model=Me)
@@ -142,13 +148,13 @@ async def google_callback(request: Request, db: Session = Depends(db_session)):
         token = await oauth.google.authorize_access_token(request)
     except OAuthError:
         logger.warning("Google OAuth callback failed")
-        return RedirectResponse(f"{settings.app_base_url}/?auth_error=google")
+        return RedirectResponse(f"{settings.post_login_url}/?auth_error=google")
     userinfo = token.get("userinfo") or {}
     email = userinfo.get("email")
     if not email or not userinfo.get("email_verified"):
-        return RedirectResponse(f"{settings.app_base_url}/?auth_error=google_unverified")
+        return RedirectResponse(f"{settings.post_login_url}/?auth_error=google_unverified")
     user = service.get_or_create_user_by_email(db, email, userinfo.get("name"))
-    response = RedirectResponse(f"{settings.app_base_url}/")
+    response = RedirectResponse(f"{settings.post_login_url}/")
     _open_session(response, db, "user", user)
     return response
 
@@ -183,9 +189,9 @@ def magic_link_callback(token: str, db: Session = Depends(db_session)):
     try:
         email = service.consume_login_link_token(db, token)
     except service.AuthError:
-        return RedirectResponse(f"{settings.app_base_url}/?auth_error=link")
+        return RedirectResponse(f"{settings.post_login_url}/?auth_error=link")
     user = service.get_or_create_user_by_email(db, email)
-    response = RedirectResponse(f"{settings.app_base_url}/")
+    response = RedirectResponse(f"{settings.post_login_url}/")
     _open_session(response, db, "user", user)
     return response
 

@@ -67,6 +67,11 @@ def retrieve_relevant_text(document_text: str, query: str, max_chars: int) -> st
     if len(document_text) <= max(RAG_CHUNK_THRESHOLD, max_chars):
         return document_text[:max_chars]
 
+    from app.config import get_settings
+
+    if not get_settings().rag_enabled:  # small instance: skip the embedding model
+        return document_text[:max_chars]
+
     try:
         return _rag_select(document_text, query, max_chars)
     except Exception as exc:  # noqa: BLE001

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import {
   AlertTriangle, ArrowLeft, ArrowRight, Check, CheckCircle2, Eye, EyeOff, LoaderCircle, Lock, Mail, Send, User,
 } from "lucide-react";
-import { authApi, publicApi, type OverviewCompany, type PublicOverview, type SessionUser } from "../services/api";
+import { apiUrl, authApi, publicApi, type OverviewCompany, type PublicOverview, type SessionUser } from "../services/api";
 import { BrandMark } from "../components/Brand";
 import { inr } from "../lib/format";
 import { prefersReducedMotion } from "../lib/motion";
@@ -427,7 +427,7 @@ function AuthForm({ initialMode, onDone, overview }: { initialMode: Mode; onDone
 
       {showGoogle && (
         <div className="vf-in" style={step()}>
-          <a className="vf-google" href="/api/auth/google/login">
+          <a className="vf-google" href={apiUrl("/api/auth/google/login")}>
             <GoogleMark /> {mode === "signin" ? "Continue with Google" : "Sign up with Google"}
           </a>
           <div className="vf-or"><span>or use email</span></div>
