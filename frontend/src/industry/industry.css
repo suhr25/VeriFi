@@ -337,3 +337,50 @@ tbody tr:hover .sticky-col { background:var(--surface-hover); }
 .carousel-track .insight { border: 0; border-right: 1px solid var(--border-subtle); border-radius: 0; background: transparent; padding: 14px 16px; }
 .carousel-track .insight:hover { border-color: var(--border-subtle); background: var(--surface-hover); box-shadow: none; }
 @media (max-width: 560px) { .carousel-track { grid-auto-columns: 86%; } }
+
+/* ---- Dark theme ---- */
+:root { --tip-bg: #10292f; }
+.viz-tip { border: 1px solid var(--border-strong); box-shadow: 0 16px 36px -10px rgba(0,0,0,.7); }
+.drawer-overlay { background: rgba(0, 0, 0, .55); backdrop-filter: blur(2px); }
+.drawer { background: var(--background); border-left: 1px solid var(--border); }
+.drawer-head, .drawer-foot { background: var(--surface); }
+.data-pill { background: rgba(255,255,255,.03); }
+.data-pill.demo { border-color: rgba(240,189,102,.3); }
+.warn-strip { border-color: rgba(240,189,102,.25); }
+.strip-zero { background: var(--border-strong); }
+.strip-dot.selected { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px rgba(63,214,196,.45); background: #fff; }
+.carousel-track, .stat, .basket-stats > div { background: linear-gradient(180deg, rgba(255,255,255,.028), rgba(255,255,255,0) 120px), var(--surface); }
+.carousel-btn { background: rgba(255,255,255,.03); }
+.peer-table tbody tr.selected, tbody tr.selected .sticky-col { background: #0f2c31; }
+.sticky-col, tfoot .sticky-col { background: var(--surface); }
+thead .sticky-col { background: #0c2127; }
+tbody tr:hover .sticky-col { background: var(--surface-hover); }
+.peer-table tfoot td { background: #0c2127; }
+.skel, .skel-box { background: linear-gradient(90deg, var(--surface) 0%, var(--surface-hover) 50%, var(--surface) 100%); background-size: 200% 100%; }
+.check-list li.mismatch { border-color: rgba(242,133,122,.3); }
+
+/* ---- Live ticker (same language as the sign-in screen) ---- */
+.ind-tape { display: flex; align-items: stretch; height: 34px; margin: calc(var(--s-1) * -1) 0 var(--s-5); border: 1px solid var(--border); border-radius: var(--r-lg); background: rgba(0, 0, 0, .25); overflow: hidden; font: 500 11.5px var(--font-mono); }
+.ind-tape-label { flex: 0 0 auto; display: flex; align-items: center; padding: 0 var(--s-4); border-right: 1px solid var(--border); color: var(--accent); letter-spacing: .1em; }
+.ind-tape-track { position: relative; flex: 1; min-width: 0; display: flex; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 32px, #000 calc(100% - 32px), transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 32px, #000 calc(100% - 32px), transparent); }
+.ind-tape-run { flex: 0 0 auto; display: flex; align-items: center; animation: ind-tape 55s linear infinite; }
+.ind-tape:hover .ind-tape-run { animation-play-state: paused; }
+@keyframes ind-tape { to { transform: translateX(-100%); } }
+.ind-tick { display: inline-flex; align-items: center; gap: 10px; padding: 0 var(--s-5); border-right: 1px solid var(--border-subtle); white-space: nowrap; color: var(--text-secondary); }
+.ind-tick b { color: #fff; font-weight: 600; }
+.ind-tick em { font-style: normal; }
+.ind-tick em.up { color: var(--success); }
+.ind-tick em.down { color: var(--danger); }
+@media (prefers-reduced-motion: reduce) {
+  .ind-tape-track { overflow-x: auto; }
+  .ind-tape-run { animation: none; }
+  .ind-tape-run[aria-hidden="true"] { display: none; }
+}
+
+/* ---- Hover: a thin teal edge lights up ---- */
+.kpi-row .metric, .carousel-track .insight { position: relative; }
+.kpi-row .metric::after, .carousel-track .insight::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--accent); box-shadow: 0 0 12px rgba(63, 214, 196, .7); transform: scaleX(0); transform-origin: left; transition: transform 320ms var(--ease); }
+.kpi-row .metric:hover::after, .carousel-track .insight:hover::after { transform: scaleX(1); }
+.insight-icon { box-shadow: 0 0 0 1px rgba(63, 214, 196, .2); }
+.carousel-track .insight:hover .insight-icon { box-shadow: 0 0 0 1px rgba(63, 214, 196, .45), 0 0 14px -2px rgba(63, 214, 196, .5); }
+.ind-hero h1 { color: #fff; }

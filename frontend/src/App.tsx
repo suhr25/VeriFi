@@ -188,9 +188,10 @@ function App({ user, onSignOut }: { user: SessionUser; onSignOut: (next?: "signi
   ];
 
   return <div className="research-app">
+    <a className="skip-link" href="#main-content">Skip to main content</a>
     <Sidebar sections={navSections} collapsed={collapsed} onToggle={toggleSidebar} mobileOpen={sidebarOpen} onCloseMobile={closeSidebar}
       user={user} status={health?.demo_mode ? { tone: "amber", label: "Offline snapshot" } : { tone: "teal", label: "Live data" }} />
-    <main className="main">
+    <main className="main" id="main-content" tabIndex={-1}>
       <header className="topbar"><button type="button" className="mobile-menu" aria-label="Open navigation" onClick={() => setSidebarOpen(true)}><Menu size={19} /></button><div className="breadcrumb"><span>{appView.kind === "industry" ? "Industries" : appView.kind.startsWith("ipo") ? "IPO Centre" : "Research"}</span><ChevronRight size={14} /><strong>{appView.kind === "industry" ? (industries.find((i) => i.id === appView.id)?.name ?? "Industry") : appView.kind === "ipo-list" ? "Mainboard IPOs" : appView.kind === "ipo-detail" ? "IPO report" : "Company research"}</strong></div><div className="topbar-meta"><span><StatusDot tone={health?.demo_mode ? "amber" : "teal"} /> {health?.demo_mode ? "Offline snapshot" : "Live data"}</span><UserMenu user={user} onSignOut={onSignOut} /></div></header>
       <div className="content-shell">
         {appView.kind === "industry" && <IndustryView key={appView.id} industryId={appView.id} onDeepDive={openDeepDive} />}

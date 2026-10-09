@@ -1,0 +1,69 @@
+/* Small, additive UX refinements. Kept separate so the product theme remains
+   the source of truth while this layer improves wayfinding and touch use. */
+.skip-link {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 100;
+  padding: 9px 13px;
+  border-radius: var(--r-md);
+  color: var(--on-accent);
+  background: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-160%);
+  transition: transform var(--dur-micro) var(--ease);
+}
+.skip-link:focus { transform: translateY(0); outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,.25); }
+
+/* Give each page a clear destination when arriving from the navigation. */
+.content-shell { scroll-margin-top: 68px; }
+.hero, .ind-hero, .ipo-detail-head { position: relative; }
+.hero::after, .ind-hero::after, .ipo-detail-head::after {
+  content: "";
+  display: block;
+  width: 42px;
+  height: 2px;
+  margin-top: var(--s-5);
+  background: linear-gradient(90deg, var(--accent), transparent);
+}
+.hero { align-items: center; }
+.hero-note { padding: 10px 12px; border: 1px solid var(--border-subtle); border-radius: var(--r-md); background: rgba(255,255,255,.02); }
+
+/* Query is the main action: clearer affordance before and during input. */
+.query-panel { position: relative; overflow: hidden; }
+.query-panel::before { content: ""; position: absolute; inset: 0 0 auto; height: 1px; background: linear-gradient(90deg, transparent, rgba(63,214,196,.65), transparent); opacity: .45; }
+.example-chips button { min-height: 30px; }
+.query-row .button { min-width: 138px; }
+
+/* Ensure dense information remains easy to scan and interact with. */
+.metrics-strip .metric:first-child, .kpi-row .metric:first-child { background-color: rgba(63,214,196,.025); }
+.metric:focus-within, .claim-card:focus-within, .source-card:focus-within { border-color: rgba(63,214,196,.45); }
+.table-wrap { border-radius: var(--r-md); }
+.table-wrap:focus-within { box-shadow: 0 0 0 2px rgba(63,214,196,.18); }
+.source-card { transition: padding var(--dur-micro) ease, background var(--dur-micro) ease; }
+.source-card:hover { margin-inline: -8px; padding-inline: 8px; background: rgba(255,255,255,.025); }
+
+/* Keep the primary controls visible and comfortable on narrow screens. */
+@media (max-width: 820px) {
+  .topbar-meta > span { display: none; }
+  .hero { align-items: flex-start; flex-direction: column; gap: var(--s-4); }
+  .hero-note { max-width: 100%; }
+  .result-actions { align-self: flex-start; flex-wrap: wrap; }
+  .query-row { flex-direction: column; }
+  .query-row input, .query-row .button { width: 100%; }
+  .query-row .button { min-width: 0; }
+  .table-wrap { position: relative; }
+  .table-wrap::after { content: ""; position: sticky; right: 0; display: block; width: 24px; height: 1px; margin-top: -1px; background: linear-gradient(90deg, transparent, var(--surface)); pointer-events: none; }
+}
+
+@media (max-width: 560px) {
+  .content-shell { padding-top: var(--s-4); }
+  .hero::after, .ind-hero::after, .ipo-detail-head::after { margin-top: var(--s-4); }
+  .example-chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+  .example-chips button { flex: 0 0 auto; }
+  .results-heading { align-items: flex-start; flex-direction: column; margin-top: var(--s-6); }
+  .run-id { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .metric-detail { min-height: 32px; }
+}

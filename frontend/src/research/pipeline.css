@@ -67,3 +67,9 @@
   .pstep:first-child { border-top: 0; }
   .pstep.active { padding: var(--s-3); }
 }
+
+/* ---- Dark theme ---- */
+.pipeline { background: linear-gradient(180deg, rgba(255,255,255,.028), rgba(255,255,255,0) 120px), var(--surface); }
+.pipeline.running .pipeline-track span::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); }
+.pipeline-track span { box-shadow: 0 0 12px rgba(63,214,196,.6); }
+.pstep.done .pstep-icon, .pstep.active .pstep-icon { color: var(--on-accent); }

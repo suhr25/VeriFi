@@ -3,37 +3,40 @@
    used across component stylesheets are mapped onto these at the bottom. */
 
 :root {
-  /* ---- Neutrals (cool, slightly green-tinted) ---- */
-  --background: #f2f5f4;
-  --surface: #ffffff;
-  --surface-sunken: #eef3f1;
-  --surface-hover: #f6faf8;
-  --border: #d6e0dd;
-  --border-subtle: #e8efed;
-  --border-strong: #c3d3cf;
+  /* ---- Surfaces: the same deep teal-black as the sign-in screen ---- */
+  color-scheme: dark;
+  --background: #061318;
+  --surface: #0a1d23;
+  --surface-raised: #0e252c;   /* popovers, drawers, menus */
+  --surface-sunken: #071519;
+  --surface-hover: #0f272e;
+  --border: rgba(190, 236, 228, .11);
+  --border-subtle: rgba(190, 236, 228, .065);
+  --border-strong: rgba(190, 236, 228, .2);
 
-  --text-primary: #0e212a;
-  --text-secondary: #4a5f67;
-  --text-muted: #7b8e93;
-  --text-faint: #a3b2b5;
+  --text-primary: #e9f4f1;
+  --text-secondary: #a6c1bc;
+  --text-muted: #7a9893;
+  --text-faint: #52716c;
 
   /* ---- Brand ---- */
-  --brand-ink: #071a20;       /* deepest teal-navy: login story, sidebar */
-  --brand-ink-2: #0c252c;
-  --sidebar-bg: #0a1c22;
-  --accent: #14958a;
-  --accent-hover: #0f8076;
-  --accent-strong: #0a6a62;
-  --accent-soft: #e3f3f0;
-  --accent-bright: #3fd6c4;   /* only on dark backgrounds */
+  --brand-ink: #050f13;
+  --brand-ink-2: #0a1d23;
+  --sidebar-bg: #050f13;
+  --accent: #3fd6c4;
+  --accent-hover: #7cf0e1;
+  --accent-strong: #5ee2d1;    /* accent used as text on dark */
+  --accent-soft: rgba(63, 214, 196, .11);
+  --accent-bright: #3fd6c4;
+  --on-accent: #042521;        /* text on accent-filled buttons */
 
   /* ---- Semantic ---- */
-  --success: #1d8a5c;
-  --success-soft: #e2f3ea;
-  --warning: #a2701f;
-  --warning-soft: #fbf2e0;
-  --danger: #b5483f;
-  --danger-soft: #fbeceb;
+  --success: #4fcf9e;
+  --success-soft: rgba(79, 207, 158, .12);
+  --warning: #f0bd66;
+  --warning-soft: rgba(240, 189, 102, .11);
+  --danger: #f2857a;
+  --danger-soft: rgba(242, 133, 122, .11);
 
   /* ---- Type ---- */
   --font-sans: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -58,10 +61,11 @@
 
   /* ---- Elevation ---- */
   --shadow-xs: none;
-  --shadow-sm: 0 1px 2px rgba(14, 33, 42, .05);
-  --shadow-md: 0 2px 4px rgba(14, 33, 42, .04), 0 8px 24px rgba(14, 33, 42, .07);
-  --shadow-lg: 0 4px 10px rgba(14, 33, 42, .05), 0 22px 48px rgba(14, 33, 42, .12);
-  --ring: 0 0 0 3px rgba(20, 149, 138, .2);
+  --shadow-sm: 0 1px 0 rgba(255, 255, 255, .03) inset;
+  --shadow-md: 0 1px 0 rgba(255, 255, 255, .04) inset, 0 12px 32px -8px rgba(0, 0, 0, .55);
+  --shadow-lg: 0 1px 0 rgba(255, 255, 255, .05) inset, 0 30px 70px -18px rgba(0, 0, 0, .7);
+  --ring: 0 0 0 3px rgba(63, 214, 196, .22);
+  --glow: 0 0 0 1px rgba(63, 214, 196, .35), 0 0 24px -4px rgba(63, 214, 196, .35);
 
   /* ---- Motion ---- */
   --ease: cubic-bezier(.22, 1, .36, 1);

@@ -345,3 +345,66 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .fin-value { font: 500 20px/1.15 var(--font-num); }
 @media (max-width: 820px) { .content-shell { padding: var(--s-5) var(--s-4) var(--s-10); } .topbar { padding: 0 var(--s-4); } }
 @media (max-width: 560px) { .metric strong { font-size: 18px; } }
+
+/* ==================================================================
+   Dark theme: the workspace shares the sign-in screen's palette and
+   atmosphere, so signing in feels like walking further into one room.
+   ================================================================== */
+:focus-visible { outline-color: rgba(63, 214, 196, .6); }
+::selection { background: rgba(63, 214, 196, .28); color: #fff; }
+html { background: var(--background); }
+body { scrollbar-color: rgba(190, 236, 228, .16) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { border: 3px solid transparent; border-radius: 99px; background: rgba(190, 236, 228, .14) padding-box; }
+::-webkit-scrollbar-thumb:hover { background-color: rgba(190, 236, 228, .26); }
+
+/* Atmosphere behind every page: one soft glow and a masked grid */
+.main { position: relative; isolation: isolate; }
+.main::before, .main::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+.main::before {
+  background:
+    radial-gradient(55% 38% at 72% -6%, rgba(63, 214, 196, .09), transparent 70%),
+    radial-gradient(38% 34% at 18% 108%, rgba(70, 150, 220, .06), transparent 70%);
+}
+.main::after {
+  background-image: linear-gradient(rgba(190, 236, 228, .045) 1px, transparent 1px), linear-gradient(90deg, rgba(190, 236, 228, .045) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(80% 60% at 60% 0%, #000 10%, transparent 70%);
+  -webkit-mask-image: radial-gradient(80% 60% at 60% 0%, #000 10%, transparent 70%);
+}
+
+.topbar { background: rgba(6, 19, 24, .72); border-bottom-color: var(--border-subtle); backdrop-filter: saturate(1.3) blur(14px); }
+
+/* Panels: a hairline top highlight makes them read as layered glass */
+.query-panel, .result-panel, .metrics-strip, .kpi-row, .claim-card, .fin-card, .empty-state.large {
+  background: linear-gradient(180deg, rgba(255, 255, 255, .028), rgba(255, 255, 255, 0) 120px), var(--surface);
+}
+.query-panel:focus-within { border-color: rgba(63, 214, 196, .4); box-shadow: 0 0 0 4px rgba(63, 214, 196, .07); }
+.query-row input, .query-row input:focus { background: var(--surface-sunken); }
+
+/* Accent-filled actions, exactly like the sign-in button */
+.button-primary { color: var(--on-accent); background: var(--accent); box-shadow: 0 1px 0 rgba(255, 255, 255, .3) inset, 0 8px 22px -10px rgba(63, 214, 196, .7); }
+.button-primary:hover:not(:disabled) { background: var(--accent-hover); box-shadow: 0 1px 0 rgba(255, 255, 255, .35) inset, 0 10px 28px -10px rgba(63, 214, 196, .85); }
+.button-secondary { background: rgba(255, 255, 255, .03); }
+.button-secondary:hover:not(:disabled) { background: rgba(255, 255, 255, .06); }
+.claim-filters button { background: transparent; }
+.claim-filters button.active { border-color: transparent; color: var(--on-accent); background: var(--accent); }
+.company-monogram { color: var(--accent-strong); background: var(--accent-soft); border: 1px solid rgba(63, 214, 196, .25); }
+
+.vtabs { background: rgba(0, 0, 0, .22); border-color: var(--border-subtle); }
+.vtabs-indicator { background: var(--surface-raised); box-shadow: 0 0 0 1px rgba(63, 214, 196, .22), 0 1px 0 rgba(255, 255, 255, .05) inset; }
+.vtabs em { background: rgba(255, 255, 255, .07); }
+
+.metric strong { color: #fff; }
+
+.error-panel { border-color: rgba(242, 133, 122, .25); }
+.error-panel span { color: rgba(242, 133, 122, .85); }
+.error-panel button:hover { background: rgba(242, 133, 122, .12); }
+.demo-pill { border-color: rgba(63, 214, 196, .28); }
+.top-avatar { background: var(--surface-raised); border-color: var(--border-strong); }
+.top-avatar.demo { color: var(--on-accent); background: var(--accent); }
+.user-pop { background: var(--surface-raised); border-color: var(--border-strong); }
+.user-pop-item:hover { background: rgba(255, 255, 255, .05); }
+.table-wrap th { background: #0c2127; }
+.claim-card blockquote { background: rgba(255, 255, 255, .025); border-left-color: rgba(63, 214, 196, .5); }
+.empty-state.large { border-style: solid; border-color: var(--border-subtle); }

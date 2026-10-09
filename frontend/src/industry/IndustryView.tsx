@@ -94,6 +94,8 @@ export function IndustryView({ industryId, onDeepDive }: { industryId: string; o
         </div>
       </section>
 
+      <IndustryTape companies={companies} />
+
       {error && <div className="error-panel"><AlertTriangle size={18} /><div><strong>Refresh failed - showing the last loaded data</strong><span>{error}</span></div><button type="button" onClick={() => setError("")} aria-label="Dismiss"><X size={16} /></button></div>}
       {snap.warnings.length > 0 && <div className="warn-strip"><AlertTriangle size={14} /><span>{snap.warnings.join(" · ")}</span></div>}
 
@@ -136,6 +138,32 @@ export function IndustryView({ industryId, onDeepDive }: { industryId: string; o
       </p>
 
       {selectedCompany && <CompanyPanel company={selectedCompany} companies={companies} snap={snap} onClose={() => setSelected(null)} onDeepDive={onDeepDive} />}
+    </div>
+  );
+}
+
+/** Same ticker language as the sign-in screen: every company's latest
+ * twelve-month revenue and year-on-year growth, scrolling slowly. */
+function IndustryTape({ companies }: { companies: CompanyMetrics[] }) {
+  if (!companies.length) return null;
+  const run = [...companies].sort((a, b) => (b.revenue_ttm ?? 0) - (a.revenue_ttm ?? 0)).map((c) => {
+    const g = c.revenue_growth_yoy;
+    const dir = g == null ? "" : g >= 0 ? "up" : "down";
+    return (
+      <span className="ind-tick" key={c.symbol}>
+        <b>{c.nse}</b>
+        <span>{inr(c.revenue_ttm)}</span>
+        <em className={dir}>{g == null ? "—" : `${g >= 0 ? "▲" : "▼"} ${pct(Math.abs(g), 1)}`}</em>
+      </span>
+    );
+  });
+  return (
+    <div className="ind-tape" aria-label="Revenue over the last 12 months and year-on-year growth, by company">
+      <span className="ind-tape-label">TTM REV · YOY</span>
+      <div className="ind-tape-track">
+        <div className="ind-tape-run">{run}</div>
+        <div className="ind-tape-run" aria-hidden="true">{run}</div>
+      </div>
     </div>
   );
 }

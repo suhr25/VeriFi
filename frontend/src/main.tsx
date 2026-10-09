@@ -6,6 +6,7 @@ import { BrandMark } from "./components/Brand";
 import { authApi, UNAUTHORIZED_EVENT, type SessionUser } from "./services/api";
 import "./theme.css";
 import "./styles.css";
+import "./ux-polish.css";
 
 /** Session gate: the workspace only mounts for a signed-in or demo user.
  * The server enforces this too - every data API answers 401 without a

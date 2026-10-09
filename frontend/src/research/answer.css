@@ -93,3 +93,12 @@
 .dba-next { border-radius: var(--r-md); }
 .dba-next.strong { border-color: rgba(162, 112, 31, .3); }
 .notice-strip { border-color: rgba(20, 149, 138, .22); border-radius: var(--r-md); background: var(--accent-soft); color: var(--text-secondary); font-size: 13px; }
+
+/* ---- Dark theme ---- */
+.dba, .dba-metric, .dba-trend, .dba-proof-card { background: linear-gradient(180deg, rgba(255,255,255,.028), rgba(255,255,255,0) 120px), var(--surface); }
+.dba-bar { background: rgba(255,255,255,.06); }
+.dba-bar i { background: var(--accent); }
+.dba-summary { border-color: rgba(63,214,196,.22); }
+.dba-table tr.focus { background: rgba(255,255,255,.02); }
+.dba-next { background: rgba(255,255,255,.02); border-color: var(--border); }
+.dba-next.strong { background: var(--warning-soft); border-color: rgba(240,189,102,.3); }
