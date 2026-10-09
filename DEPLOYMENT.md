@@ -168,13 +168,10 @@ in one.** All provider keys above live only on the web service.
   locally. If the exchange API rejects requests from Render's network, the
   dashboard stays empty: check the logs (section 15) and use the
   copy-from-local route below.
-- **IPO data must be seeded** once. From the service's **Shell** tab (paid
-  plans):
-  ```
-  python -m scripts.seed_ipo
-  ```
-  Or, on any plan, from your machine with the database's **External**
-  URL:
+- **IPO data is seeded automatically** on every container start (the
+  Docker `CMD` runs `python -m scripts.seed_ipo`, which updates rows in
+  place). Edit `scripts/seed_ipo.py` and redeploy to change it. To seed by
+  hand from your machine, use the database's **External** URL:
   ```
   DATABASE_URL="postgresql://...render.com/verifi" python -m scripts.seed_ipo
   ```
@@ -347,7 +344,7 @@ Alpha Vantage, Resend) have their own free quotas.
 - [ ] Deploy finished. `/api/health` returns `{"status":"ok"}`
 - [ ] Logs show the migrations and "Startup complete"
 - [ ] Industry dashboard shows the ten companies (or copy data from local)
-- [ ] `python -m scripts.seed_ipo` run against the Render database
+- [ ] Logs show "Seeded 1 IPO(s)." and the IPO page lists SRIT India
 - [ ] Google redirect URI added and test users configured (if using Google)
 - [ ] Sign in, guest session, research, IPO question box checked in the browser
 - [ ] Calendar reminder: upgrade the free database before day 30

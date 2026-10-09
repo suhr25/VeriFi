@@ -34,5 +34,8 @@ RUN mkdir -p /app/data && useradd --create-home --uid 10001 verifi && chown -R v
 USER verifi
 
 EXPOSE 8000
-# Render (and most hosts) assign the port through $PORT.
-CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips='*'"]
+# Render (and most hosts) assign the port through $PORT. The IPO seed is
+# idempotent (updates in place), so it runs on every start to keep the
+# database's IPO data in step with scripts/seed_ipo.py; a failure is logged
+# but never stops the server from starting.
+CMD ["sh", "-c", "python -m scripts.seed_ipo || echo 'IPO seed failed - continuing'; exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips='*'"]
