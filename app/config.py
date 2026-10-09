@@ -136,7 +136,13 @@ class Settings(BaseSettings):
         """On Render, fall back to the service's own public URL so OAuth
         redirects and magic links work without setting APP_BASE_URL."""
         render_url = os.environ.get("RENDER_EXTERNAL_URL")
-        if render_url and "APP_BASE_URL" not in os.environ and self.app_base_url == "http://localhost:8000":
+        # A blank dashboard field arrives as an empty string - treat it as
+        # unset. A localhost value copied from a local .env can never be right
+        # on a deployed host (OAuth and email links would point at the
+        # visitor's own machine), so the real public URL wins there too.
+        current = self.app_base_url.strip()
+        is_local = current == "" or "://localhost" in current or "://127.0.0.1" in current
+        if render_url and is_local:
             self.app_base_url = render_url.rstrip("/")
         return self
 

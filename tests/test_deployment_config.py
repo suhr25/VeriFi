@@ -26,6 +26,24 @@ def test_render_external_url_is_the_default_public_base_url(monkeypatch):
     assert s.post_login_url == "https://verifi.onrender.com"
 
 
+def test_blank_app_base_url_still_falls_back_to_render_url(monkeypatch):
+    monkeypatch.setenv("APP_BASE_URL", "")
+    monkeypatch.setenv("RENDER_EXTERNAL_URL", "https://verifi.onrender.com")
+    assert Settings(_env_file=None).app_base_url == "https://verifi.onrender.com"
+
+
+def test_localhost_app_base_url_is_replaced_on_render(monkeypatch):
+    monkeypatch.setenv("APP_BASE_URL", "http://localhost:8000")
+    monkeypatch.setenv("RENDER_EXTERNAL_URL", "https://verifi-gkuz.onrender.com")
+    assert Settings(_env_file=None).app_base_url == "https://verifi-gkuz.onrender.com"
+
+
+def test_localhost_app_base_url_is_kept_when_running_locally(monkeypatch):
+    monkeypatch.delenv("RENDER_EXTERNAL_URL", raising=False)
+    monkeypatch.setenv("APP_BASE_URL", "http://localhost:8000")
+    assert Settings(_env_file=None).app_base_url == "http://localhost:8000"
+
+
 def test_explicit_app_base_url_wins_over_render_url(monkeypatch):
     monkeypatch.setenv("RENDER_EXTERNAL_URL", "https://verifi.onrender.com")
     monkeypatch.setenv("APP_BASE_URL", "https://verifi.example.com")
