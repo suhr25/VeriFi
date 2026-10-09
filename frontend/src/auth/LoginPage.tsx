@@ -89,25 +89,19 @@ export function LoginPage({ onAuthenticated, initialMode = "signin" }: { onAuthe
   );
 }
 
-// ---- Ticker tape: every company's real figure and check result -----------------------
+// ---- Ticker tape: every company's real figure -----------------------------------------
 
 function Tape({ companies }: { companies: OverviewCompany[] }) {
   const items = companies.filter((c) => c.revenue_ttm);
   if (!items.length) return <div className="vf-tape empty" aria-hidden="true" />;
-  const row = items.map((c) => {
-    const passed = c.checks.filter((k) => k.status === "verified").length;
-    return (
-      <span className="vf-tick" key={c.nse}>
-        <b>{c.nse}</b>
-        <span>{inr(c.revenue_ttm)}</span>
-        <em className={c.verification_status === "verified" ? "ok" : "warn"}>
-          {c.verification_status === "verified" ? "✓" : "!"} {passed}/{c.checks.length} checks
-        </em>
-      </span>
-    );
-  });
+  const row = items.map((c) => (
+    <span className="vf-tick" key={c.nse}>
+      <b>{c.nse}</b>
+      <span>{inr(c.revenue_ttm)}</span>
+    </span>
+  ));
   return (
-    <footer className="vf-tape vf-in" style={{ ["--d" as string]: "700ms" }} aria-label="Revenue over the last 12 months and consistency checks, by company">
+    <footer className="vf-tape vf-in" style={{ ["--d" as string]: "700ms" }} aria-label="Revenue over the last 12 months, by company">
       <div className="vf-tape-label">REV · TTM</div>
       <div className="vf-tape-track">
         <div className="vf-tape-run">{row}</div>
