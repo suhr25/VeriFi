@@ -225,9 +225,6 @@
 @keyframes vf-tape { to { transform: translateX(-100%); } }
 .vf-tick { display: inline-flex; align-items: center; gap: 10px; padding: 0 var(--s-6); border-right: 1px solid var(--vf-line); white-space: nowrap; color: var(--vf-text-2); }
 .vf-tick b { color: #fff; font-weight: 600; }
-.vf-tick em { font-style: normal; }
-.vf-tick em.ok { color: var(--vf-teal); }
-.vf-tick em.warn { color: var(--vf-amber); }
 
 /* ---- Responsive ---- */
 @media (max-width: 1100px) {
