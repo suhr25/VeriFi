@@ -122,7 +122,8 @@ path land back on the app.
 | `MAX_FOLLOWUP_ITERATIONS`, `MAX_SUBQUERIES_PER_PLAN` | no | Research loop limits (`0`, `4`). |
 | `APP_BASE_URL` | no | Defaults to Render's `RENDER_EXTERNAL_URL`. Set it only for a custom domain. It must match the Google OAuth redirect URI exactly. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | no | Enables "Continue with Google". Hidden when unset. |
-| `RESEND_API_KEY` / `RESEND_FROM_EMAIL` | no | Enables magic-link sign-in. Hidden when unset. |
+| `BREVO_API_KEY` / `BREVO_SENDER_EMAIL` | no | Magic-link sign-in to **any** inbox without owning a domain: verify one sender address in Brevo (Senders). Preferred over Resend when set. |
+| `RESEND_API_KEY` / `RESEND_FROM_EMAIL` | no | Magic-link sign-in via Resend. Sends only to your own Resend account address until you verify a domain. Hidden when neither email provider is set. |
 | `CORS_ORIGINS` | Option B only | Exact frontend origin(s), comma-separated, e.g. `https://verifi-web.onrender.com`. Leave empty for Option A. |
 | `FRONTEND_URL` | Option B only | Where sign-in redirects back to. |
 | `SESSION_COOKIE_SAMESITE` | Option B only | `none` (forces `Secure`). The default `lax` is right for Option A. |

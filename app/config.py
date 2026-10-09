@@ -85,6 +85,13 @@ class Settings(BaseSettings):
     resend_api_key: str | None = None
     resend_from_email: str = "VeriFi <onboarding@resend.dev>"
 
+    # Brevo (preferred when set): sends to any inbox from one verified
+    # sender address - no domain needed. Verify BREVO_SENDER_EMAIL under
+    # Brevo -> Senders, domains & dedicated IPs -> Senders.
+    brevo_api_key: str | None = None
+    brevo_sender_email: str | None = None
+    brevo_sender_name: str = "VeriFi"
+
     # Base URL this server is reachable at - used to build the Google OAuth
     # redirect URI and the link sent in magic-link emails. Must match what
     # is registered in the Google Cloud Console exactly (scheme+host+port).
@@ -177,6 +184,14 @@ class Settings(BaseSettings):
     @property
     def resend_available(self) -> bool:
         return bool(self.resend_api_key)
+
+    @property
+    def brevo_available(self) -> bool:
+        return bool(self.brevo_api_key and self.brevo_sender_email)
+
+    @property
+    def email_signin_available(self) -> bool:
+        return self.brevo_available or self.resend_available
 
     @property
     def effective_demo_mode(self) -> bool:

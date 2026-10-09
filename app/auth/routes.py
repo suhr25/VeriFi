@@ -169,7 +169,7 @@ class MagicLinkRequest(BaseModel):
 @auth_router.post("/magic-link", status_code=202)
 def request_magic_link(req: MagicLinkRequest, db: Session = Depends(db_session)):
     settings = get_settings()
-    if not settings.resend_available:
+    if not settings.email_signin_available:
         raise HTTPException(status_code=503, detail="Email sign-in isn't configured on this server.")
     try:
         token = service.create_login_link_token(db, req.email)
@@ -224,7 +224,7 @@ def public_overview():
     settings = get_settings()
     signin_methods = {
         "google_signin_available": settings.google_oauth_available,
-        "email_signin_available": settings.resend_available,
+        "email_signin_available": settings.email_signin_available,
     }
     industries = list_industries()
     if not industries:
