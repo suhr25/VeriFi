@@ -23,13 +23,10 @@ from app.schemas import CompanyEntity, Source, SourceTier, SourceType
 
 logger = logging.getLogger("financial_research_agent.retrieval.sec_edgar")
 
-# Entries kept per XBRL concept. Small, because the document is a
-# compact evidence digest for the LLM extractor, not an archive.
 ENTRIES_PER_CONCEPT = 3
 
 COMPANY_FACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"
 
-# XBRL us-gaap concept tags we pull, mapped to a human metric name.
 METRIC_TAGS = {
     "Revenues": "revenue",
     "RevenueFromContractWithCustomerExcludingAssessedTax": "revenue",
@@ -52,9 +49,6 @@ class SECEdgarProvider(FinancialDataProvider):
 
     def fetch(self, company: CompanyEntity, period: str | None) -> list[Source]:
         if not self.is_available() or not company.cik:
-            # A company with no CIK simply isn't an SEC registrant (e.g. a
-            # non-US listing) - in a live run that's a real absence of
-            # evidence, not something to paper over with a fixture.
             reason = "company has no SEC CIK" if not company.cik else "provider disabled"
             if not mock_fallback_allowed("SEC EDGAR", reason):
                 return []
@@ -85,12 +79,6 @@ class SECEdgarProvider(FinancialDataProvider):
                 continue
             units = tag_data.get("units", {})
             for unit_name, entries in units.items():
-                # Prefer entries matching the requested fiscal period. The
-                # full companyfacts payload spans many years of every
-                # concept; emitting all of it and letting the extractor
-                # truncate meant the requested quarter could be cut off
-                # entirely, leaving only unrelated annual figures. Ranking
-                # by relevance keeps the asked-for period in the document.
                 ranked = sorted(
                     entries,
                     key=lambda e: (0 if _matches_period(e, wanted) else 1, _neg_end(e)),
@@ -121,14 +109,6 @@ class SECEdgarProvider(FinancialDataProvider):
 
     def _mock_fetch(self, company: CompanyEntity, period: str | None) -> list[Source]:
         period_label = period or "the most recent reported quarter"
-        # Deliberately long and multi-section (Overview / MD&A / Segment
-        # results / Risk Factors / Outlook), not just the four headline
-        # figures - a real 10-Q reads like this, and it gives the RAG
-        # chunk-retrieval layer (app/rag/indexer.py) genuine material to
-        # select from in demo mode too, rather than only ever exercising
-        # that code path against live filings. The headline paragraph is
-        # left first and unchanged so the existing regex-based mock
-        # extractor (used when no LLM is configured) still finds it.
         document_text = (
             f"[MOCK SEC FILING DATA - DEMO MODE, NOT A REAL SEC FILING]\n\n"
             f"{company.name} periodic filing excerpt for {period_label}.\n\n"
@@ -210,8 +190,5 @@ def _matches_period(entry: dict, wanted: tuple[str | None, str | None]) -> bool:
 
 
 def _neg_end(entry: dict) -> str:
-    """Sort key that orders `end` dates newest-first among equally
-    relevant entries (inverting a string date via its complement keeps the
-    comparison purely lexicographic)."""
     end = entry.get("end", "")
     return "".join(chr(255 - ord(ch)) for ch in end)

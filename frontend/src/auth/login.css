@@ -1,7 +1,3 @@
-/* VeriFi sign-in: one dark full-screen scene. Headline and a large live
-   evidence diagram on the left, the form floating in a dark panel on the
-   right, a ticker of real figures along the bottom. */
-
 .vf-login {
   --ink-0: #050f13;
   --ink-1: #071a20;
@@ -23,14 +19,12 @@
 }
 .vf-login.leaving { opacity: 0; transform: scale(.995); }
 
-/* ---- Entrance ---- */
 .vf-in { opacity: 0; transform: translateY(8px); animation: vf-in 700ms var(--ease) forwards; animation-delay: var(--d, 0ms); }
 .vf-in.vf-blur { filter: blur(8px); animation-name: vf-in-blur; animation-duration: 1000ms; }
 .vf-in.vf-rise { transform: translateY(16px) scale(.985); }
 @keyframes vf-in { to { opacity: 1; transform: none; } }
 @keyframes vf-in-blur { to { opacity: 1; transform: none; filter: blur(0); } }
 
-/* ---- Atmosphere ---- */
 .vf-bg { position: absolute; inset: 0; z-index: -1; pointer-events: none; animation: vf-bg 900ms var(--ease) both; }
 @keyframes vf-bg { from { opacity: 0; } }
 .vf-glow {
@@ -54,7 +48,6 @@
 }
 @keyframes vf-grid-drift { to { background-position: 56px 56px; } }
 
-/* ---- Top bar ---- */
 .vf-top { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); padding: var(--s-6) clamp(24px, 4vw, 56px) 0; }
 .vf-brand { display: flex; align-items: center; gap: var(--s-3); }
 .vf-brand .brand-mark { transition: transform var(--dur) var(--ease); }
@@ -66,7 +59,6 @@
 .vf-status i { width: 6px; height: 6px; border-radius: 50%; background: var(--vf-teal); box-shadow: 0 0 0 3px rgba(63, 214, 196, .18); animation: vf-live 2.4s ease-in-out infinite; }
 @keyframes vf-live { 50% { box-shadow: 0 0 0 6px rgba(63, 214, 196, 0); } }
 
-/* ---- Stage ---- */
 .vf-stage {
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 420px); align-items: center;
   gap: clamp(32px, 5vw, 88px);
@@ -77,7 +69,6 @@
 .vf-scene h1 { display: flex; flex-direction: column; margin: 0 0 var(--s-8); font: 600 clamp(36px, 4vw, 56px)/1.04 var(--font-display); letter-spacing: -.04em; color: #f6fcfa; }
 .vf-scene h1 .vf-accent { color: var(--vf-teal); }
 
-/* ---- Evidence diagram (large) ---- */
 .vf-trail-wrap { max-width: 860px; }
 .vf-trail { margin: 0; }
 .vf-trail.skeleton { height: 380px; border-radius: var(--r-lg); background: linear-gradient(90deg, rgba(255,255,255,.02), rgba(255,255,255,.05), rgba(255,255,255,.02)); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
@@ -122,7 +113,6 @@
 @keyframes et-node { to { opacity: 1; } }
 @keyframes shimmer { to { background-position: -200% 0; } }
 
-/* ---- Floating panel ---- */
 .vf-panel-col { display: flex; flex-direction: column; align-items: stretch; }
 .vf-panel {
   position: relative; padding: var(--s-8) var(--s-8) var(--s-6);
@@ -185,7 +175,6 @@
 .vf-error.show > div { padding: 10px 12px; border: 1px solid rgba(240, 128, 116, .28); border-radius: var(--r-md); background: rgba(240, 128, 116, .1); }
 .vf-error svg { flex: 0 0 auto; margin-top: 1px; }
 
-/* Primary: the brightest object on the screen */
 .vf-primary { position: relative; width: 100%; height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2); border-radius: var(--r-md); color: #052723; background: var(--vf-teal); font-size: 14px; font-weight: 700; box-shadow: 0 1px 0 rgba(255,255,255,.35) inset, 0 8px 24px -8px rgba(63, 214, 196, .6); transition: background var(--dur-micro) ease, box-shadow var(--dur-micro) ease, transform var(--dur-micro) var(--ease); }
 .vf-primary:hover:not(:disabled) { background: var(--vf-teal-2); transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,.4) inset, 0 12px 30px -8px rgba(63, 214, 196, .75); }
 .vf-primary:active:not(:disabled) { transform: translateY(0) scale(.99); }
@@ -215,7 +204,6 @@
 .vf-link-sent b { color: #fff; }
 .vf-link-sent .vf-text-link { margin-top: var(--s-4); }
 
-/* ---- Ticker tape ---- */
 .vf-tape { min-width: 0; display: flex; align-items: stretch; height: 40px; border-top: 1px solid var(--vf-line); background: rgba(0, 0, 0, .28); font: 500 11.5px var(--font-mono); }
 .vf-tape.empty { opacity: 0; }
 .vf-tape-label { flex: 0 0 auto; display: flex; align-items: center; padding: 0 var(--s-5); border-right: 1px solid var(--vf-line); color: var(--vf-teal); letter-spacing: .1em; }
@@ -226,12 +214,10 @@
 .vf-tick { display: inline-flex; align-items: center; gap: 10px; padding: 0 var(--s-6); border-right: 1px solid var(--vf-line); white-space: nowrap; color: var(--vf-text-2); }
 .vf-tick b { color: #fff; font-weight: 600; }
 
-/* ---- Responsive ---- */
 @media (max-width: 1100px) {
   .vf-stage { grid-template-columns: minmax(0, 1fr) 380px; gap: var(--s-8); }
   .vf-scene h1 { font-size: 38px; }
 }
-/* Tablet and phone: the form leads; the diagram becomes a smaller preview. */
 @media (max-width: 900px) {
   .vf-stage { grid-template-columns: 1fr; gap: var(--s-8); padding-top: var(--s-8); }
   .vf-panel-col { order: 1; max-width: 460px; width: 100%; margin: 0 auto; }
@@ -244,9 +230,9 @@
   .vf-stage { padding: var(--s-6) var(--s-4) var(--s-8); }
   .vf-panel { padding: var(--s-6) var(--s-5) var(--s-5); border-radius: var(--r-lg); }
   .vf-scene h1 { font-size: 30px; }
-  .vf-trail-wrap { display: none; } /* labels would be too small to read */
+  .vf-trail-wrap { display: none; }
   .vf-input, .vf-google, .vf-primary { height: 48px; }
-  .vf-input input { font-size: 16px; } /* stops iOS zooming into the field */
+  .vf-input input { font-size: 16px; }
   .vf-tape-label { padding: 0 var(--s-3); }
 }
 
@@ -260,7 +246,6 @@
   .vf-tape-run[aria-hidden="true"] { display: none; }
 }
 
-/* Fit the whole scene in one screen: the diagram gives up height first. */
 .vf-scene h1 { margin-bottom: var(--s-6); font-size: clamp(34px, 3.6vw, 52px); }
 .vf-diagram { max-height: max(240px, calc(100vh - 470px)); max-height: max(240px, calc(100dvh - 470px)); }
 .vf-stage { padding-bottom: var(--s-6); }
@@ -268,7 +253,6 @@
 .vf-form-head p { margin-bottom: var(--s-5); }
 @media (max-width: 900px) { .vf-diagram { max-height: none; } }
 
-/* Guest: one line under a hairline, not a second full-width button. */
 .vf-guest { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); margin-top: var(--s-5); padding-top: var(--s-4); border-top: 1px solid var(--vf-line-2); color: var(--vf-text-3); font-size: 12.5px; }
 .vf-guest-btn { color: #fff; font-weight: 600; }
 .vf-guest-btn:hover .vf-arrow { transform: translateX(3px); }
@@ -278,8 +262,6 @@
 .vf-legal { margin-top: var(--s-3); }
 @media (max-width: 900px) { .vf-stage { padding-top: var(--s-8); } }
 
-/* After the first company, switching is a quick crossfade, not a replay of
-   the page-load sequence (which would leave the diagram empty for a second). */
 .vf-trail.rotated .et-node { animation-duration: 420ms; animation-delay: calc(var(--i) * 25ms); }
 .vf-trail.rotated .et-line { animation-duration: 500ms; animation-delay: calc(80ms + var(--i) * 25ms); }
 .vf-trail.rotated .et-glow { animation-duration: 600ms; animation-delay: 0ms; }

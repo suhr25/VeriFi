@@ -1,16 +1,3 @@
-"""Query Planner: decomposes a free-text research query into a structured
-ResearchPlan (PRD section 6).
-
-Real path: an LLM extracts company mentions, period, requested metrics, and
-question categories, and drafts targeted sub-queries. Company name strings
-are then resolved to CompanyEntity objects via CompanyResolver - the LLM
-never invents a ticker/CIK itself.
-
-Mock path (DEMO_MODE / no LLM key): deterministic regex + directory-lookup
-heuristics produce a plan of the same shape from a fixed sub-query template.
-This is intentionally a weaker fallback than the real LLM path; it exists so
-the full pipeline stays runnable and demonstrable without any API key.
-"""
 from __future__ import annotations
 
 import logging
@@ -92,25 +79,17 @@ class QueryPlanner:
             logger.warning("LLM query planning failed (%s); falling back to mock planner", exc)
             return self._mock_plan(query)
 
-    # ---- Real path -----------------------------------------------------
-
     def _llm_plan(self, query: str) -> ResearchPlan:
         from datetime import date
 
         today = date.today()
         extraction = self.llm.complete_json(
             system=PLANNER_SYSTEM_PROMPT,
-            # Without the date the model anchors searches to its training era
-            # (measured: sub-queries for "2023" reports in a 2026 run).
             user=(f"Today's date is {today:%d %B %Y}. Unless the user names a period, target the most recent "
                   f"reporting periods and use {today.year} in search queries.\nUser query: {query}"),
             schema_model=_PlannerLLMOutput,
         )
         companies = [self.resolver.resolve(name) for name in extraction.company_names]
-        # Map the LLM's raw company_names strings to resolved canonical names,
-        # so a sub-query's `company` field lines up with CompanyEntity.name -
-        # this is what lets claim extraction attribute claims to the right
-        # company in multi-company (comparison) queries.
         raw_to_resolved = {raw: entity.name for raw, entity in zip(extraction.company_names, companies)}
 
         sub_queries = [
@@ -135,8 +114,6 @@ class QueryPlanner:
             sub_queries=sub_queries,
             is_comparison=extraction.is_comparison or len(companies) > 1,
         )
-
-    # ---- Mock path -------------------------------------------------------
 
     def _mock_plan(self, query: str) -> ResearchPlan:
         mentioned_names = self.resolver.find_mentions(query)
@@ -171,8 +148,6 @@ class QueryPlanner:
 
         from app.config import get_settings
 
-        # Cap scales with company count so comparison queries don't have one
-        # company's sub-queries silently dropped in favour of another's.
         max_sub = get_settings().max_subqueries_per_plan * max(1, len(companies))
         sub_queries = sub_queries[:max_sub] if sub_queries else sub_queries
 

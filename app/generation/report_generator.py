@@ -1,19 +1,3 @@
-"""Report Generator (PRD section 15).
-
-Design decision: every section EXCEPT the executive overview paragraph is
-built by deterministic templating directly over verified Claim/Conflict/
-Source objects - this guarantees every number in the report traces to a
-claim_id (and therefore to a stored evidence span) with zero risk of the
-generator inventing a figure.
-
-The executive overview is the one place an LLM is used for genuine
-synthesis/prose quality (a legitimate GenAI use per the project brief), but
-it is constrained: the model is given ONLY the list of already-verified
-claim statements (with their claim_ids) and told not to add any fact not
-present in them. Its cited claim_ids are validated against the real claim
-set afterwards and any hallucinated id is dropped - the generator must
-consume verified research objects, not regenerate facts from scratch.
-"""
 from __future__ import annotations
 
 import logging
@@ -43,10 +27,6 @@ FINANCIAL_PERFORMANCE_METRICS = {
 
 
 def _is_financial_metric(metric: str) -> bool:
-    """Substring match, because extracted metric names vary by source:
-    Alpha Vantage yields "revenue_ttm", SEC XBRL can yield a raw tag like
-    "revenuefromcontractwithcustomerexcludingassessedtax". An exact-set
-    test silently dropped both from the report."""
     key = metric.strip().lower()
     return any(core.replace("_", "") in key.replace("_", "") for core in FINANCIAL_PERFORMANCE_METRICS)
 
@@ -70,8 +50,6 @@ _RISK_WORDS = ("risk", "threat", "headwind", "uncertain", "challenge", "exposure
 
 
 def is_risk_claim(claim: Claim) -> bool:
-    """A qualitative claim about a risk - recognised by its label or its
-    wording, since the extractor doesn't always use the exact label."""
     if claim.metric == "risk_factor":
         return True
     if str(claim.claim_type) != "qualitative":
@@ -85,10 +63,6 @@ _BOILERPLATE = ("misstatement", "audit procedures", "auditor's responsibilit", "
 
 
 def is_presentable_risk(claim: Claim) -> bool:
-    """A risk worth showing: a complete sentence of real content - not a
-    search-snippet fragment ("constant currency growth is ...") and not
-    auditor / securities boilerplate (measured: an auditor's sentence about
-    fraud-detection risk was extracted as an Infosys business risk)."""
     text = (claim.statement or "").strip()
     if len(text.split()) < 6 or text.endswith(("...", "\u2026")):
         return False
@@ -139,8 +113,6 @@ class ReportGenerator:
             names = plan.raw_query
         return f"{names} - {plan.period}" if plan.period else names
 
-    # ---- Executive overview (the one LLM-assisted section) --------------
-
     def _build_overview(self, company_summary: str, supported: list[Claim]) -> ReportSection:
         if self.llm is not None and supported:
             try:
@@ -168,9 +140,6 @@ class ReportGenerator:
                 content=f"No sufficiently verified evidence was found for {company_summary}.",
                 claim_ids=[],
             )
-        # Lead with headline financial metrics (revenue/income/margin), then one
-        # risk highlight, so the overview reads like an analyst summary rather
-        # than whatever claim happened to score highest confidence.
         financial = _best_per_metric(
             [c for c in supported if c.claim_type == ClaimType.NUMERIC and c.metric in FINANCIAL_PERFORMANCE_METRICS]
         )
@@ -192,20 +161,7 @@ class ReportGenerator:
             used = top
         return ReportSection(title="Executive Overview", content=" ".join(sentences), claim_ids=[c.claim_id for c in used])
 
-    # ---- Deterministic templated sections ---------------------------------
-
     def _build_financial_performance(self, all_claims: list[Claim]) -> ReportSection:
-        """Reports every numeric financial figure that was extracted and
-        checked, annotated with its verdict - not only the SUPPORTED ones.
-
-        Showing only supported claims meant a run whose figures all came
-        back INSUFFICIENT (e.g. TTM data retrieved for a quarterly
-        question) rendered an empty "no figures were found" section, which
-        reads as a broken feature rather than the real finding: the
-        numbers were retrieved, but could not be tied to the requested
-        period. The verdict is shown alongside each figure so nothing here
-        is mistaken for verified fact.
-        """
         relevant = [
             c for c in all_claims
             if c.claim_type == ClaimType.NUMERIC and _is_financial_metric(c.metric)
@@ -232,8 +188,6 @@ class ReportGenerator:
         risk_claims = [c for c in supported if is_risk_claim(c) and is_presentable_risk(c)]
         if not risk_claims:
             return ReportSection(title="Risks", content="No verified risk factors were found in retrieved sources.", claim_ids=[])
-        # The full sentence (statement), not the short `value` - which can be
-        # empty or a fragment. Duplicates (same sentence from two sources) once.
         seen: set[str] = set()
         lines = []
         for c in risk_claims:
@@ -361,14 +315,9 @@ _METRIC_LABELS = {
 
 
 def humanize_metric(metric: str) -> str:
-    """Turns an internal metric key (or a raw XBRL tag the extractor may
-    emit, e.g. 'revenuefromcontractwithcustomerexcludingassessedtax') into
-    a label fit for a report."""
     key = metric.strip().lower()
     if key in _METRIC_LABELS:
         return _METRIC_LABELS[key]
-    # Raw XBRL concept names arrive lowercased and unseparated; map the
-    # common ones by substring rather than shipping the tag to the reader.
     for needle, label in (
         ("revenuefromcontract", "Revenue"),
         ("netincome", "Net income"),
@@ -383,9 +332,6 @@ def humanize_metric(metric: str) -> str:
 
 
 def humanize_value(c: Claim) -> str:
-    """Renders a claim's value the way a financial report would, rather
-    than as the raw magnitude the source happened to use (e.g.
-    '466822988000' -> '$466.82B', '0.326' -> '32.6%')."""
     unit = (c.unit or "").strip()
     raw = str(c.value).strip()
 
@@ -397,7 +343,6 @@ def humanize_value(c: Claim) -> str:
             pct = float(raw.rstrip("%"))
         except ValueError:
             return raw
-        # Sources express ratios either as 0.326 or as 32.6.
         if abs(pct) <= 1:
             pct *= 100
         return f"{pct:.1f}%"

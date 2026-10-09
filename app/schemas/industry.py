@@ -1,12 +1,3 @@
-"""Industry-level schemas: one IndustrySnapshot is everything the industry
-dashboard shows for a peer universe (e.g. the ten NIFTY IT companies) -
-per-company metrics from reported financials, deterministic consistency
-checks, industry aggregates and each company's share of industry revenue.
-
-All monetary values are absolute amounts in the industry's reporting
-currency (INR for NIFTY IT); ratios are fractions (0.24 = 24%), never
-percent numbers, so the frontend formats them one way.
-"""
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -48,10 +39,6 @@ CheckStatus = Literal["verified", "mismatch", "unavailable"]
 
 
 class CrossCheck(BaseModel):
-    """One deterministic consistency check between two independently
-    reported figures (e.g. four quarterly filings vs. the annual report).
-    No LLM is involved."""
-
     metric: str
     label: str
     reported: float | None = None
@@ -60,15 +47,10 @@ class CrossCheck(BaseModel):
     tolerance_pct: float
     status: CheckStatus
     detail: str
-    # True for notes that explain a figure (e.g. a correction to a filing's
-    # own tagging) rather than test it; they don't affect the company's
-    # verification status.
     informational: bool = False
 
 
 class QuarterPoint(BaseModel):
-    """One quarter exactly as filed with the exchange."""
-
     period_end: str
     revenue: float | None = None
     net_income: float | None = None
@@ -81,10 +63,6 @@ class QuarterPoint(BaseModel):
 
 
 class CompanyMetrics(BaseModel):
-    """Every figure is taken from the company's reported results (stored in
-    the database) or computed from them with a stated formula. Nothing is
-    estimated, and there is no market data."""
-
     name: str
     short_name: str
     symbol: str
@@ -122,8 +100,6 @@ class MetricAggregate(BaseModel):
 
 
 class Concentration(BaseModel):
-    """How the industry's revenue is split between its companies."""
-
     total_revenue: float | None = None
     hhi: float | None = None
     effective_companies: float | None = None
@@ -146,7 +122,6 @@ class IndustrySnapshot(BaseModel):
     fetch_seconds: float | None = None
     stale: bool = False
     refreshing: bool = False
-    # When the stored data was last checked against the source (oldest company).
     synced_at: datetime | None = None
     source: str = "Companies' reported quarterly results (consolidated), stored in the VeriFi database"
     companies: list[CompanyMetrics]

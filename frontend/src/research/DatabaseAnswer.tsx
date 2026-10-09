@@ -15,8 +15,6 @@ function fmt(kind: ComparisonRow["kind"], v: number | null | undefined): string 
   return "₹" + v.toFixed(2);
 }
 
-/** A question answered from stored, verified filings - every figure is
- * labelled with its company and links back to the filing it came from. */
 export function DatabaseAnswer({ answer, onRunResearch, onOpenIndustry }: {
   answer: Answer;
   onRunResearch: () => void;
@@ -26,8 +24,6 @@ export function DatabaseAnswer({ answer, onRunResearch, onOpenIndustry }: {
   const title = cos.map((c) => c.short_name).join(" vs ");
   const focus = new Set(answer.focus_metrics);
   const rows = [...answer.comparison].sort((a, b) => Number(focus.has(b.metric)) - Number(focus.has(a.metric)));
-  // One shared scale for every company's quarterly chart, so a 3x larger
-  // business has 3x taller bars.
   const sharedMax = Math.max(...cos.flatMap((c) => c.quarters.map((q) => q.revenue ?? 0)), 1);
   const synced = answer.synced_at ? ago(answer.synced_at.endsWith("Z") ? answer.synced_at : answer.synced_at + "Z") : null;
 

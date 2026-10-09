@@ -1,5 +1,3 @@
-"""Production configuration: database URLs, Render URL fallback, cookies,
-CORS and the RAG memory switch."""
 import importlib
 
 import pytest
@@ -85,7 +83,6 @@ def test_rag_disabled_falls_back_to_prefix_truncation_without_loading_a_model(mo
 
 
 def test_cors_headers_only_when_origins_are_configured(monkeypatch):
-    # Same-origin default: no CORS headers at all.
     from app import main
 
     plain = TestClient(main.app).get("/api/health", headers={"Origin": "https://evil.example.com"})

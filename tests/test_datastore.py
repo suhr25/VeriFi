@@ -1,5 +1,3 @@
-"""Financial data store: filings in, facts stored, filings back out -
-database first, source API only for what's missing."""
 import uuid
 from datetime import datetime, timedelta
 
@@ -57,8 +55,6 @@ def test_ingest_is_idempotent_and_stores_one_fact_per_number(db_session):
     assert store.ingest_filing(db_session, company.company_id, filing) is False
     db_session.commit()
     facts = db_session.scalars(select(FinancialFactORM).where(FinancialFactORM.company_id == company.company_id)).all()
-    # One fact per reported quarter figure (this filing leaves profit before
-    # tax empty, so 9 of the 10) + 2 annual figures from the March filing.
     assert len(facts) == 9 + 2
     assert {f.period_type for f in facts} == {"quarter", "annual"}
     assert all(f.origin == "xbrl" and f.document_id for f in facts)
@@ -107,7 +103,7 @@ def test_sync_downloads_only_filings_the_database_lacks(db_session, monkeypatch)
 
     assert sync.sync_company(ref, None) == {"listed": 5, "added": 5}
     assert sync.sync_company(ref, None) == {"listed": 5, "added": 0}
-    assert len(downloads) == 5  # the second sync downloaded nothing
+    assert len(downloads) == 5
 
     runs = db_session.scalars(select(IngestionRunORM).where(IngestionRunORM.target == ref.nse)).all()
     assert [r.status for r in runs] == ["success", "success"]
@@ -142,11 +138,9 @@ def test_freshness_splits_missing_and_stale(db_session):
 
 
 def test_fresh_database_answers_without_calling_the_api(monkeypatch):
-    """Database first: once the industry is stored and fresh, a request
-    never reaches the source."""
     from app.industry.service import IndustryService
 
-    IndustryService().get_snapshot("information-technology")  # fills from the seed if needed
+    IndustryService().get_snapshot("information-technology")
     calls = []
     monkeypatch.setattr(sync, "refresh", lambda refs, industry_id: calls.append(refs) or [])
     snap = IndustryService().get_snapshot("information-technology")

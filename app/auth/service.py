@@ -1,14 +1,3 @@
-"""Accounts and sessions.
-
-- Passwords are hashed with scrypt (memory-hard, standard library - no
-  extra dependency) with a per-user random salt.
-- A session is a random 256-bit token sent to the browser in an HttpOnly
-  cookie. Only its SHA-256 is stored server-side.
-- Demo sessions need no account and expire quickly; they see the same
-  real data as signed-in users - "demo" means "no account", never
-  "sample data".
-- Repeated failed logins for one email are throttled in-process.
-"""
 from __future__ import annotations
 
 import base64
@@ -59,8 +48,6 @@ def verify_password(password: str, stored: str) -> bool:
     return hmac.compare_digest(digest, base64.b64decode(digest_b64))
 
 
-# A fixed hash to verify against when the email doesn't exist, so a login
-# attempt takes the same time whether or not the account exists.
 _DUMMY_HASH = hash_password(secrets.token_hex(16))
 
 
@@ -74,14 +61,12 @@ def _now() -> datetime:
 
 @dataclass
 class Principal:
-    kind: str  # "user" | "demo"
+    kind: str
     user_id: str | None
     name: str
     email: str | None
     expires_at: datetime
 
-
-# ---- Failed-login throttle -----------------------------------------------------
 
 _FAILURE_WINDOW_SECONDS = 300
 _MAX_FAILURES = 5
@@ -105,9 +90,6 @@ def _record_failure(key: str) -> None:
 def reset_throttle() -> None:
     with _failures_lock:
         _failures.clear()
-
-
-# ---- Accounts ------------------------------------------------------------------
 
 
 def normalize_email(email: str) -> str:
@@ -137,9 +119,6 @@ def authenticate(db: Session, email: str, password: str) -> UserORM:
     if len(_recent_failures(email)) >= _MAX_FAILURES:
         raise AuthError("Too many failed attempts. Please wait a few minutes and try again.", status=429)
     user = db.scalar(select(UserORM).where(UserORM.email == email))
-    # An account created via Google or a magic link has no password at all -
-    # distinct from a wrong password, so it gets its own clear message
-    # rather than failing a verify_password(password, None) call.
     if user and user.password_hash is None:
         raise AuthError("This account uses Google or email sign-in - there's no password to check. Use one of those instead.", status=401)
     ok = verify_password(password, user.password_hash if user else _DUMMY_HASH)
@@ -149,16 +128,7 @@ def authenticate(db: Session, email: str, password: str) -> UserORM:
     return user
 
 
-# ---- Google / magic-link: find-or-create by verified email --------------------
-
-
 def get_or_create_user_by_email(db: Session, email: str, name: str | None = None) -> UserORM:
-    """Used by both the Google OAuth callback and the magic-link callback -
-    either path has already verified the caller controls this email address
-    (Google via its own identity check, a magic link via proof of inbox
-    access), so the same account is reused across sign-in methods rather
-    than creating a duplicate. A first-time sign-in creates the account on
-    the spot, with no password (see authenticate above)."""
     email = normalize_email(email)
     user = db.scalar(select(UserORM).where(UserORM.email == email))
     if user:
@@ -169,9 +139,6 @@ def get_or_create_user_by_email(db: Session, email: str, name: str | None = None
     db.add(user)
     db.commit()
     return user
-
-
-# ---- Magic-link tokens ----------------------------------------------------------
 
 
 def create_login_link_token(db: Session, email: str) -> str:
@@ -187,9 +154,6 @@ def create_login_link_token(db: Session, email: str) -> str:
 
 
 def consume_login_link_token(db: Session, token: str) -> str:
-    """Validates and burns a magic-link token, returning the email it was
-    issued for. Raises AuthError if missing, expired, or already used -
-    each token works exactly once."""
     row = db.get(EmailLoginTokenORM, _hash_token(token))
     if row is None or row.used or row.expires_at < _now():
         raise AuthError("This sign-in link is invalid or has expired. Request a new one.", status=401)
@@ -198,16 +162,12 @@ def consume_login_link_token(db: Session, token: str) -> str:
     return row.email
 
 
-# ---- Sessions -------------------------------------------------------------------
-
-
 def start_session(db: Session, kind: str, user_id: str | None = None) -> tuple[str, datetime]:
     settings = get_settings()
     lifetime = timedelta(days=settings.user_session_days) if kind == "user" else timedelta(hours=settings.demo_session_hours)
     token = secrets.token_urlsafe(32)
     expires = _now() + lifetime
     db.add(SessionORM(token_hash=_hash_token(token), kind=kind, user_id=user_id, created_at=_now(), expires_at=expires))
-    # Opportunistic cleanup keeps the table from growing without bound.
     db.execute(delete(SessionORM).where(SessionORM.expires_at < _now()))
     db.commit()
     return token, expires

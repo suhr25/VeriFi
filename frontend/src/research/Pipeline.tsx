@@ -21,11 +21,6 @@ function stepState(step: string, status: string): "done" | "active" | "upcoming"
 
 const fmt = (sec: number) => (sec < 60 ? `${sec}s` : `${Math.floor(sec / 60)}m ${String(sec % 60).padStart(2, "0")}s`);
 
-/**
- * The research pipeline, drawn once and used twice: idle, it explains how
- * a verified report is built; during a run, the same steps become live
- * progress driven by the run's real status (not a timer).
- */
 export function Pipeline({ run, running }: { run?: ResearchRun | null; running?: boolean }) {
   const status = run?.status ?? "pending";
   const [elapsed, setElapsed] = useState(0);

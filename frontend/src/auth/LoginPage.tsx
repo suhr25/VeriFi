@@ -22,8 +22,6 @@ export function LoginPage({ onAuthenticated, initialMode = "signin" }: { onAuthe
       .catch(() => setOverview({ companies: [], google_signin_available: false, email_signin_available: false }));
   }, []);
 
-  // The background follows the pointer by a few pixels - depth without
-  // moving anything the user is reading or clicking.
   useEffect(() => {
     if (prefersReducedMotion() || !window.matchMedia("(pointer: fine)").matches) return;
     let frame = 0;
@@ -41,7 +39,6 @@ export function LoginPage({ onAuthenticated, initialMode = "signin" }: { onAuthe
   }, []);
 
   const finish = (user: SessionUser) => {
-    // Hold the success state briefly, then fade the page before the workspace mounts.
     window.setTimeout(() => setLeaving(true), prefersReducedMotion() ? 0 : 260);
     window.setTimeout(() => onAuthenticated(user), prefersReducedMotion() ? 0 : 620);
   };
@@ -89,7 +86,6 @@ export function LoginPage({ onAuthenticated, initialMode = "signin" }: { onAuthe
   );
 }
 
-// ---- Ticker tape: every company's real figure -----------------------------------------
 
 function Tape({ companies }: { companies: OverviewCompany[] }) {
   const items = companies.filter((c) => c.revenue_ttm);
@@ -111,9 +107,7 @@ function Tape({ companies }: { companies: OverviewCompany[] }) {
   );
 }
 
-// ---- Evidence trail: filings -> reported figure -> checks ------------------------------
 
-/** Quarter-end labels counted back from the latest filed quarter. */
 function quarterLabels(latestIso: string | null | undefined, count: number): string[] {
   if (!latestIso) return Array.from({ length: count }, () => "Quarterly results");
   const latest = new Date(latestIso);
@@ -123,7 +117,6 @@ function quarterLabels(latestIso: string | null | undefined, count: number): str
   });
 }
 
-/** The overview's check labels are full sentences; the diagram needs short ones. */
 function shortCheck(label: string): string {
   const l = label.toLowerCase();
   if (l.includes("annual") && l.includes("revenue")) return "Quarters add up (revenue)";
@@ -204,18 +197,15 @@ function TrailDiagram({ company }: { company: OverviewCompany | null }) {
         </radialGradient>
       </defs>
 
-      {/* Column captions */}
       <g className="et-caption">
         <text x="0" y="14">FILINGS</text>
         <text x="320" y="14" textAnchor="middle">REPORTED FIGURE</text>
         <text x="452" y="14">CHECKS</text>
       </g>
 
-      {/* Connectors */}
       {docYs.map((y, i) => <path key={`d${i}`} id={`${id}-d${i}`} className="et-line" d={docPath(y)} pathLength={1} style={{ ["--i" as string]: i }} />)}
       {checkYs.map((y, i) => <path key={`c${i}`} id={`${id}-c${i}`} className={`et-line ${checks[i].ok ? "" : "warn"}`} d={checkPath(y)} pathLength={1} style={{ ["--i" as string]: i + 4 }} />)}
 
-      {/* Travelling evidence */}
       {motion && docYs.map((_, i) => (
         <circle key={`dm${i}`} r="2.4" className="et-pulse" opacity="0">
           <animateMotion dur="2.8s" begin={`${1.2 + i * 0.45}s`} repeatCount="indefinite" calcMode="spline" keyTimes="0;1" keySplines=".45 0 .55 1">
@@ -233,7 +223,6 @@ function TrailDiagram({ company }: { company: OverviewCompany | null }) {
         </circle>
       ))}
 
-      {/* Filings */}
       {docYs.map((y, i) => (
         <g key={`doc${i}`} className="et-node" style={{ ["--i" as string]: i }} transform={`translate(0 ${y - 22})`}>
           <rect width="160" height="44" rx="8" className="et-box" />
@@ -244,7 +233,6 @@ function TrailDiagram({ company }: { company: OverviewCompany | null }) {
       ))}
       {extra > 0 && <text x="0" y="292" className="et-sub">+ {extra} earlier filing{extra > 1 ? "s" : ""}</text>}
 
-      {/* Reported figure */}
       <circle cx="320" cy="150" r="96" fill={`url(#glow-${id})`} className="et-glow" />
       <g className="et-node et-figure" style={{ ["--i" as string]: 2 }}>
         <rect x="244" y="104" width="152" height="92" rx="10" className="et-box strong" />
@@ -253,7 +241,6 @@ function TrailDiagram({ company }: { company: OverviewCompany | null }) {
         <text x="320" y="180" textAnchor="middle" className="et-sub">{company ? company.short_name : "profit, EPS"}</text>
       </g>
 
-      {/* Checks */}
       {checks.map((c, i) => (
         <g key={`chk${i}`} className="et-node" style={{ ["--i" as string]: i + 5 }} transform={`translate(452 ${checkYs[i] - 20})`}>
           <rect width="188" height="40" rx="8" className={`et-box ${c.ok ? "" : "warn"}`} />
@@ -266,7 +253,6 @@ function TrailDiagram({ company }: { company: OverviewCompany | null }) {
         </g>
       ))}
 
-      {/* Verdict */}
       <g className="et-node et-verdict" style={{ ["--i" as string]: 9 }} transform="translate(452 252)">
         <rect width="188" height="30" rx="15" className={`et-pill ${verified ? "" : "warn"}`} />
         <text x="94" y="19.5" textAnchor="middle" className="et-pill-text">{verified ? "All checks pass" : "Shown with a flag"}</text>
@@ -275,9 +261,7 @@ function TrailDiagram({ company }: { company: OverviewCompany | null }) {
   );
 }
 
-// ---- Auth form ------------------------------------------------------------------------------
 
-/** Lucide has no brand logos (by design); Google's own 4-colour "G" mark. */
 function GoogleMark({ size = 18 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 18 18" aria-hidden="true">
@@ -289,7 +273,6 @@ function GoogleMark({ size = 18 }: { size?: number }) {
   );
 }
 
-/** Error area that opens smoothly instead of pushing the form down in one jump. */
 function FormError({ message }: { message: string }) {
   return (
     <div className={`vf-error ${message ? "show" : ""}`} role="alert" aria-live="assertive">
@@ -317,8 +300,6 @@ function AuthForm({ initialMode, onDone, overview }: { initialMode: Mode; onDone
   const switched = useRef(false);
   useEffect(() => {
     setError("");
-    // Focus the first field when the user switches tabs, and on first load
-    // only with a mouse/trackpad - on phones it would pop the keyboard open.
     if (switched.current || window.matchMedia("(pointer: fine)").matches) firstField.current?.focus({ preventScroll: true });
     switched.current = true;
   }, [mode]);

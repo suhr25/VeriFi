@@ -31,7 +31,6 @@ def test_exact_value_in_evidence_is_supported_match():
 
 
 def test_adversarial_wrong_number_is_flagged_as_mismatch():
-    """PRD's canonical adversarial example: source says $85.8B, claim says $88.5B."""
     evidence = "Revenue was $85.8 billion for Q3 2024."
     claim = _numeric_claim("88.5", "billion", evidence)
     result = NumericMatcher().match(claim)
@@ -48,8 +47,6 @@ def test_million_vs_billion_representations_still_match():
 
 
 def test_wrong_unit_is_not_falsely_matched():
-    """A claim of '85.8 million' should NOT match evidence stating '85.8 billion' -
-    these differ by 1000x even though the raw digits match."""
     evidence = "Revenue was $85.8 billion for Q3 2024."
     claim = _numeric_claim("85.8", "million", evidence)
     result = NumericMatcher().match(claim)

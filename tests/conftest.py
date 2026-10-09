@@ -1,9 +1,3 @@
-"""Test configuration.
-
-Forces DEMO_MODE and an isolated temp SQLite database BEFORE any app module
-is imported, so the test suite never makes a real external API call and
-never touches the developer's own data/financial_research_agent.db.
-"""
 import os
 import tempfile
 
@@ -11,8 +5,6 @@ _tmp_db_fd, _tmp_db_path = tempfile.mkstemp(suffix=".db")
 os.close(_tmp_db_fd)
 os.environ["DATABASE_URL"] = f"sqlite:///{_tmp_db_path}"
 os.environ["DEMO_MODE"] = "true"
-# Environment variables override .env, so blanking these keeps the
-# developer's real sign-in credentials out of the test run.
 for _key in ("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "RESEND_API_KEY", "BREVO_API_KEY", "BREVO_SENDER_EMAIL"):
     os.environ[_key] = ""
 

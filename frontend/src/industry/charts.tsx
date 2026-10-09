@@ -3,13 +3,6 @@ import type { CompanyMetrics, QuarterPoint } from "../services/api";
 import { inr, pct } from "../lib/format";
 import { METRICS, median, value, type MetricKey } from "./metrics";
 
-/* Charts are plain HTML/CSS positioned by percentage rather than SVG with a
-   fixed viewBox, so they reflow to any width (down to phone) without
-   distorting text. One series each, so a single accent colour carries
-   the marks; identity comes from direct labels and tooltips, never hue. */
-
-// ---- Tooltip ---------------------------------------------------------------
-
 interface Tip { x: number; y: number; content: ReactNode }
 
 function useTooltip() {
@@ -36,8 +29,6 @@ function TipRows({ title, rows }: { title: string; rows: [string, string][] }) {
   return <><strong>{title}</strong>{rows.map(([k, v]) => <span key={k}><em>{k}</em>{v}</span>)}</>;
 }
 
-// ---- Revenue share bars ----------------------------------------------------
-
 export function ShareBars({ companies, selected, onSelect }: { companies: CompanyMetrics[]; selected?: string | null; onSelect: (symbol: string) => void }) {
   const tip = useTooltip();
   const rows = companies.filter((c) => c.revenue_share != null).sort((a, b) => (b.revenue_share ?? 0) - (a.revenue_share ?? 0));
@@ -63,8 +54,6 @@ export function ShareBars({ companies, selected, onSelect }: { companies: Compan
   );
 }
 
-// ---- Dot strip (one metric, all peers) ------------------------------------------
-
 export function DotStrip({ metric, companies, selected, onSelect }: { metric: MetricKey; companies: CompanyMetrics[]; selected?: string | null; onSelect: (symbol: string) => void }) {
   const tip = useTooltip();
   const def = METRICS[metric];
@@ -77,7 +66,6 @@ export function DotStrip({ metric, companies, selected, onSelect }: { metric: Me
   const med = median(vals)!;
   const best = def.better === null ? null : pts.reduce((a, b) => (def.better ? (b.v > a.v ? b : a) : (b.v < a.v ? b : a)));
   const sel = pts.find((p) => p.c.symbol === selected);
-  // Label the best performer and the selected company only - selective, not one per dot.
   const labelled = [best, sel].filter((p, i, arr): p is { c: CompanyMetrics; v: number } => !!p && arr.findIndex((q) => q?.c.symbol === p.c.symbol) === i);
 
   return (
@@ -109,18 +97,12 @@ export function DotStrip({ metric, companies, selected, onSelect }: { metric: Me
   );
 }
 
-// ---- Quarterly revenue bars --------------------------------------------------------
-
-/** scaleMax: pass a shared maximum when several companies are shown side by
- * side, so bar heights are comparable across charts (not each self-scaled). */
 export function QuarterBars({ quarters, scaleMax }: { quarters: QuarterPoint[]; scaleMax?: number }) {
   const tip = useTooltip();
   const pts = quarters.filter((q) => q.revenue != null);
   if (!pts.length) return <p className="muted-note">No quarterly statements reported.</p>;
   const max = scaleMax ?? Math.max(...pts.map((q) => q.revenue!));
   const label = (d: string) => new Date(d).toLocaleDateString("en-IN", { month: "short", year: "2-digit" });
-  // The provider sometimes omits a quarter; show the hole rather than
-  // letting neighbouring bars close up and imply continuity.
   const withGaps: (QuarterPoint & { missing?: boolean })[] = [];
   pts.forEach((q, i) => {
     if (i > 0) {

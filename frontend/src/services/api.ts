@@ -190,7 +190,6 @@ export const api = {
   report: (id: string) => fetchJson<Report>(`/api/research/${id}/report`),
 };
 
-// ---- Industry dashboard ----------------------------------------------------
 
 export interface IndustrySummary {
   id: string;
@@ -292,7 +291,6 @@ export const industryApi = {
     fetchJson<IndustrySnapshot>(`/api/industries/${id}${refresh ? "?refresh=true" : ""}`),
 };
 
-// ---- Auth & public ------------------------------------------------------------
 
 export interface SessionUser {
   kind: "user" | "demo";
@@ -339,7 +337,6 @@ export const publicApi = {
   overview: () => fetchJson<PublicOverview>("/api/public/overview"),
 };
 
-// ---- Answers from the database ---------------------------------------------------
 
 export interface ComparisonRow {
   metric: string;
@@ -384,7 +381,6 @@ export interface DatabaseAnswer {
 
 export interface NotAnswered { answered: false; reason: string }
 
-// ---- IPO Centre -------------------------------------------------------------
 
 export interface IpoSummary {
   ipo_id: string;

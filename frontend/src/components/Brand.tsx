@@ -1,9 +1,5 @@
 import { useId } from "react";
 
-/** VeriFi mark: a ledger of rising bars closed by a check - "the numbers,
- * verified". Drawn inline so it inherits no external asset. Each instance
- * gets its own gradient id: a shared id breaks every copy whenever the
- * first one on the page is hidden (display:none). */
 export function BrandMark({ size = 28 }: { size?: number }) {
   const gid = `vf-g-${useId().replace(/:/g, "")}`;
   return (

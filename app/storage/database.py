@@ -1,15 +1,3 @@
-
-"""Database engine and schema setup.
-
-PostgreSQL (with pgvector) is the primary database - locally via
-`docker compose up -d db`, and a hosted Postgres (Neon/Supabase) when
-deployed. The schema is owned by Alembic migrations (migrations/), applied
-automatically on startup, so a fresh database and a deployed one always end
-up with identical tables.
-
-SQLite remains supported as a zero-setup fallback (and for the test suite):
-there the tables are created directly from the models.
-"""
 from __future__ import annotations
 
 import logging
@@ -30,7 +18,6 @@ class Base(DeclarativeBase):
 settings = get_settings()
 IS_SQLITE = settings.database_url.startswith("sqlite")
 
-# Ensure sqlite data dir exists (e.g. sqlite:///./data/foo.db)
 if settings.database_url.startswith("sqlite:///./"):
     db_path = Path(settings.database_url.replace("sqlite:///./", ""))
     db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -38,8 +25,6 @@ if settings.database_url.startswith("sqlite:///./"):
 engine = create_engine(
     settings.database_url,
     connect_args={"check_same_thread": False} if IS_SQLITE else {},
-    # Hosted Postgres closes idle connections; pre-ping replaces dead ones
-    # instead of failing the next request.
     pool_pre_ping=not IS_SQLITE,
 )
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
@@ -69,8 +54,6 @@ def init_db() -> None:
 
 
 def _sqlite_add_missing_columns() -> None:
-    """create_all never alters existing tables; an older local SQLite file
-    predates users.role, so add it in place."""
     columns = {c["name"] for c in inspect(engine).get_columns("users")}
     if "role" not in columns:
         with engine.begin() as conn:

@@ -1,7 +1,3 @@
-/** Number formatting for Indian-market figures. Money is shown in the
- * units Indian filings and press use - crore (1e7) and lakh crore (1e12) -
- * rather than billions, so figures read the way analysts quote them. */
-
 const DASH = "—";
 
 export function inr(value: number | null | undefined): string {

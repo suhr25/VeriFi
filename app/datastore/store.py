@@ -1,14 +1,3 @@
-"""Financial data store: writes filings into the database and reads them back.
-
-A filing becomes one `documents` row plus one `financial_facts` row per
-number (revenue, net profit, EPS, ...), each pointing back to its document.
-Writes are idempotent - a document is keyed by the checksum of its source,
-so syncing the same filing twice changes nothing.
-
-Reading reverses the mapping: stored facts are reassembled into `Filing`
-objects, so the analytics layer computes the same numbers whether the data
-arrived a second ago from the API or was ingested months back.
-"""
 from __future__ import annotations
 
 import hashlib
@@ -24,7 +13,6 @@ from app.industry.nse import Filing
 from app.schemas.industry import IndustryCompanyRef
 from app.storage.models import CompanyORM, DocumentORM, FinancialFactORM, IngestionRunORM
 
-# Filing attribute -> (metric name, unit). Quarter figures.
 QUARTER_METRICS: dict[str, tuple[str, str]] = {
     "revenue": ("revenue", "INR"),
     "net_income": ("net_income", "INR"),
@@ -37,7 +25,6 @@ QUARTER_METRICS: dict[str, tuple[str, str]] = {
     "paid_up_capital": ("paid_up_capital", "INR"),
     "face_value": ("face_value", "INR_per_share"),
 }
-# Twelve-month figures carried by fiscal-year-end filings.
 ANNUAL_METRICS: dict[str, str] = {"annual_revenue": "revenue", "annual_net_income": "net_income"}
 
 
@@ -68,9 +55,6 @@ def _filed_at(value: str | None) -> datetime | None:
     return None
 
 
-# ---- Companies ---------------------------------------------------------------------
-
-
 def upsert_company(db: Session, ref: IndustryCompanyRef, industry_id: str | None) -> CompanyORM:
     company = db.get(CompanyORM, company_id_for(ref.nse))
     now = _now()
@@ -90,16 +74,11 @@ def mark_synced(db: Session, company_id: str) -> None:
         company.last_synced_at = _now()
 
 
-# ---- Writing filings ------------------------------------------------------------------
-
-
 def known_checksums(db: Session, company_id: str) -> set[str]:
     return set(db.scalars(select(DocumentORM.checksum).where(DocumentORM.company_id == company_id)))
 
 
 def ingest_filing(db: Session, company_id: str, filing: Filing, source: str = "exchange_api") -> bool:
-    """Stores one quarterly filing and its numbers. Returns False (and
-    changes nothing) if this exact filing is already stored."""
     digest = checksum(filing.url)
     if db.scalar(select(DocumentORM.document_id).where(DocumentORM.checksum == digest)):
         return False
@@ -147,19 +126,11 @@ def ingest_filing(db: Session, company_id: str, filing: Filing, source: str = "e
     return True
 
 
-# ---- Reading filings back ---------------------------------------------------------------
-
-
 def load_filings(db: Session, company_id: str, limit: int = 8) -> list[Filing]:
-    """The company's stored quarterly filings, newest first - one per
-    quarter (the latest-filed revision wins), rebuilt from their facts."""
     return load_filings_many(db, [company_id], limit)[company_id]
 
 
 def load_filings_many(db: Session, company_ids: list[str], limit: int = 8) -> dict[str, list[Filing]]:
-    """load_filings for several companies in three queries total (companies,
-    documents, facts) rather than a few per company - the whole industry
-    view is read in one round of queries."""
     companies = {c.company_id: c for c in db.scalars(select(CompanyORM).where(CompanyORM.company_id.in_(company_ids)))}
     docs = db.scalars(
         select(DocumentORM)
@@ -213,9 +184,6 @@ def _rebuild(chosen: list[DocumentORM], facts_by_doc: dict[str, list[FinancialFa
             notes=list(doc.notes or []),
         ))
     return filings
-
-
-# ---- Ingestion log -------------------------------------------------------------------------
 
 
 def start_run(db: Session, kind: str, target: str | None) -> IngestionRunORM:

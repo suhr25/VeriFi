@@ -3,8 +3,6 @@ import { useEffect, useRef, useState } from "react";
 export const prefersReducedMotion = () =>
   typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-/** Animates a number from its previous value to `target` (ease-out cubic).
- * Jumps straight to the value when the user prefers reduced motion. */
 export function useCountUp(target: number | null | undefined, duration = 900): number | null {
   const [value, setValue] = useState<number | null>(target ?? null);
   const from = useRef<number>(0);

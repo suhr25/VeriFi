@@ -46,17 +46,10 @@ def test_sufficiency_false_when_core_metric_insufficient_and_proposes_followup()
 
 
 def test_followup_loop_never_exceeds_configured_max_iterations(db_session, monkeypatch):
-    """PRD risk 5.1.3: 'LLM cost control in agentic loops ... unbounded
-    iterations' - the loop MUST terminate even if evidence never becomes
-    sufficient."""
     orchestrator = ResearchOrchestrator(db_session)
-    # get_settings() is process-wide lru_cached, so mutate via monkeypatch
-    # (auto-reverted after the test) rather than direct assignment, which
-    # would otherwise leak these overrides into every other test.
     monkeypatch.setattr(orchestrator.settings, "max_followup_iterations", 2)
-    monkeypatch.setattr(orchestrator.settings, "max_research_queries", 100)  # high enough to not be the limiting factor here
+    monkeypatch.setattr(orchestrator.settings, "max_research_queries", 100)
 
-    # Force "always insufficient" so the loop would run forever without the cap.
     def _always_insufficient(plan, claims):
         from app.schemas import SourceType, SubQuery
         return False, [SubQuery(text="Apple Inc. revenue", purpose="revenue", target_source_types=[SourceType.WEB_ARTICLE])], "forced insufficient"
@@ -72,7 +65,7 @@ def test_followup_loop_never_exceeds_configured_max_iterations(db_session, monke
 def test_followup_loop_stops_at_research_query_budget(db_session, monkeypatch):
     orchestrator = ResearchOrchestrator(db_session)
     monkeypatch.setattr(orchestrator.settings, "max_followup_iterations", 10)
-    monkeypatch.setattr(orchestrator.settings, "max_research_queries", 5)  # very tight budget
+    monkeypatch.setattr(orchestrator.settings, "max_research_queries", 5)
 
     def _always_insufficient(plan, claims):
         from app.schemas import SourceType, SubQuery
@@ -82,13 +75,10 @@ def test_followup_loop_stops_at_research_query_budget(db_session, monkeypatch):
 
     run = orchestrator.run("Analyze Apple Q3 2024")
 
-    assert run.research_queries_used <= 5 + 1  # small slack: one batch may slightly exceed before the check
+    assert run.research_queries_used <= 5 + 1
 
 
 def test_coverage_summary_reports_best_verdict_per_metric():
-    """The sufficiency prompt is built from a per-metric coverage summary
-    rather than every claim. A metric with any SUPPORTED claim must report
-    supported even when other claims for it were insufficient."""
     from app.agents.followup_research import _coverage_summary
 
     claims = [

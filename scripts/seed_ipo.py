@@ -1,14 +1,3 @@
-"""Seed (insert or update) one IPO's listing details and report text.
-
-Every field here must come from the real, official IPO document - nothing
-in this file is invented or estimated. Fill in IPOS below with the data
-the user provides, then run:
-
-    python -m scripts.seed_ipo
-
-Re-running is safe: an IPO with the same ipo_id is updated in place, not
-duplicated.
-"""
 from __future__ import annotations
 
 import sys
@@ -22,15 +11,8 @@ from app.storage.models import IpoORM
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 
-# ---- SRIT India Limited -----------------------------------------------------
-# Source: company DRHP/RHP (SEBI), NSE issue information, and press/financial
-# database cross-checks (Economic Times, Moneycontrol, Business Standard,
-# Groww, Trendlyne, StockAnalysis.com, Value Research, InvestorZone, IPO Bit,
-# India Infoline, newboard.in) as supplied by the user. Figures are reported
-# as given, not re-derived or estimated.
 
 SRIT_FINANCIALS = [
-    # Operating EBITDA excludes other income (offer-document basis).
     {"period": "FY23", "revenue_cr": 151.85, "operating_ebitda_cr": None, "operating_ebitda_margin_pct": None, "pat_cr": 15.04, "net_margin_pct": None, "eps": 5.55},
     {"period": "FY24", "revenue_cr": 271.09, "operating_ebitda_cr": 40.99, "operating_ebitda_margin_pct": 15.12, "pat_cr": 29.08, "net_margin_pct": 10.73, "eps": 10.79},
     {"period": "FY25", "revenue_cr": 389.35, "operating_ebitda_cr": 49.80, "operating_ebitda_margin_pct": 12.79, "pat_cr": 33.60, "net_margin_pct": 8.63, "eps": 8.32},
@@ -183,8 +165,6 @@ IPOS: list[dict] = [
         },
     },
 ]
-
-# -----------------------------------------------------------------------------
 
 
 def _now() -> datetime:

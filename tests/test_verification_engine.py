@@ -1,10 +1,3 @@
-"""Verifies the LLM-skip optimization in VerificationEngine.verify_all:
-a claim the deterministic numeric matcher already resolved conclusively
-must never reach the LLM at all (not just "use a cheap mock path" - never
-even attempt a call), since that's the whole point of the optimization
-under a rate-limited real provider. Qualitative/inconclusive claims must
-still go through the LLM.
-"""
 import json
 
 from app.analysis.normalizer import ClaimNormalizer
@@ -14,10 +7,6 @@ from app.verification.verification_engine import VerificationEngine
 
 
 class _ExplodingLLM(LLMProvider):
-    """Fails the test if the verification engine ever calls it - used to
-    prove a conclusive numeric claim is skipped entirely, not just cheaply
-    mocked."""
-
     def _raw_complete(self, system, user, max_tokens, temperature):
         raise AssertionError("LLM should not have been called for a conclusive numeric match")
 
@@ -72,8 +61,6 @@ def test_conclusive_numeric_match_never_calls_the_llm():
 
 
 def test_conclusive_numeric_match_with_no_period_in_evidence_is_insufficient_without_llm():
-    """period_match is also deterministic - a numeric match whose evidence
-    never states the claimed period is still resolved without the LLM."""
     claim = _numeric_claim("85.8", "billion", "revenue was $85.8 billion")
     engine = VerificationEngine(llm=_ExplodingLLM())
     results = engine.verify_all([claim])

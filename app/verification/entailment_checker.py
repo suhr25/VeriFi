@@ -1,13 +1,3 @@
-"""LLM Entailment Checker (PRD section 12).
-
-Given ONLY a claim and its raw evidence text - never the generated report,
-never other claims, never a summary - determines whether the evidence
-supports, contradicts, or is insufficient for the claim. This isolation is
-what prevents the "verifier grading its own homework" failure mode the PRD
-explicitly calls out (section 5.1.4): the checker cannot see what the
-Report Generator wrote, only the same primary evidence the claim itself was
-extracted from.
-"""
 from __future__ import annotations
 
 import logging
@@ -34,12 +24,6 @@ merely something related. Do not use outside/world knowledge about the company -
 the evidence text given.
 """
 
-# One research run can produce 20-30+ claims. Checking each with its own LLM
-# call is what exhausts a free-tier per-minute token budget. Batching several
-# independent (claim, evidence) pairs into one call cuts call count by this
-# factor while keeping each pair's verdict judged only against its own
-# evidence text - the isolation the PRD requires (see module docstring) is
-# about never seeing the generated report, not about one call per claim.
 ENTAILMENT_BATCH_SIZE = 6
 
 BATCH_ENTAILMENT_SYSTEM_PROMPT = """You are the Entailment Checker of a financial research agent's verification engine.
@@ -82,11 +66,6 @@ class EntailmentChecker:
         return self._mock_check(claim)
 
     def check_batch(self, claims: list[Claim]) -> dict[str, EntailmentResult]:
-        """Same semantics as check(), but processes many claims in chunks of
-        ENTAILMENT_BATCH_SIZE per LLM call instead of one call per claim.
-        Returns a dict keyed by claim_id so callers don't need to track
-        ordering. If a chunk's LLM call fails, only that chunk falls back to
-        the mock heuristic - other chunks are unaffected."""
         if not claims:
             return {}
         if self.llm is None:
@@ -156,8 +135,6 @@ class EntailmentChecker:
         return self.llm.complete_json(
             system=ENTAILMENT_SYSTEM_PROMPT, user=user_prompt, schema_model=EntailmentResult, max_tokens=500
         )
-
-    # ---- Mock path -------------------------------------------------------
 
     def _mock_check(self, claim: Claim) -> EntailmentResult:
         if claim.claim_type == ClaimType.NUMERIC:

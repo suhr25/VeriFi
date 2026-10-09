@@ -42,9 +42,6 @@ def require_session(request: Request, db: Session = Depends(db_session)) -> serv
     return principal
 
 
-# ---- Auth ----------------------------------------------------------------------------
-
-
 class SignupRequest(BaseModel):
     name: str
     email: str
@@ -65,7 +62,6 @@ class Me(BaseModel):
 
 def _cookie_policy() -> dict:
     settings = get_settings()
-    # Browsers reject SameSite=None cookies that aren't Secure.
     secure = settings.session_cookie_secure or settings.session_cookie_samesite == "none"
     return {"httponly": True, "samesite": settings.session_cookie_samesite, "secure": secure, "path": "/"}
 
@@ -123,8 +119,6 @@ def me(principal: service.Principal = Depends(require_session)):
     return _me(principal)
 
 
-# ---- Sign in with Google --------------------------------------------------------
-#
 # A browser-navigation flow, not a JSON fetch: /google/login redirects the
 # whole page to Google, Google redirects the whole page back to
 # /google/callback, which sets the session cookie and redirects the whole
@@ -159,9 +153,6 @@ async def google_callback(request: Request, db: Session = Depends(db_session)):
     return response
 
 
-# ---- Magic-link email sign-in ----------------------------------------------------
-
-
 class MagicLinkRequest(BaseModel):
     email: str
 
@@ -194,9 +185,6 @@ def magic_link_callback(token: str, db: Session = Depends(db_session)):
     response = RedirectResponse(f"{settings.post_login_url}/")
     _open_session(response, db, "user", user)
     return response
-
-
-# ---- Public --------------------------------------------------------------------------
 
 
 @public_router.get("/health")
@@ -247,7 +235,6 @@ def public_overview():
             "verification_status": c.verification_status,
             "checks": [
                 {"label": k.label, "status": k.status, "difference_pct": k.difference_pct}
-                # Report checks only - the price cross-check is market data.
                 for k in c.checks if not k.informational and k.metric != "price"
             ],
         })

@@ -1,10 +1,3 @@
-"""VeriFi management commands.
-
-    python -m app.cli status                  what the database holds
-    python -m app.cli sync [--all]            fetch new filings (stale companies, or --all)
-    python -m app.cli make-admin EMAIL        let a user upload and edit data
-    python -m app.cli import-sqlite [PATH]    copy an old SQLite database into the current one
-"""
 from __future__ import annotations
 
 import argparse
@@ -67,8 +60,6 @@ def cmd_make_admin(args) -> None:
 
 
 def cmd_import_sqlite(args) -> None:
-    """Copies every row of an older SQLite database into the current
-    database, skipping rows that already exist (safe to re-run)."""
     path = Path(args.path)
     if not path.exists():
         sys.exit(f"No SQLite file at {path}")

@@ -1,11 +1,3 @@
-"""Deterministic industry analytics over companies' reported financials.
-
-Every figure is computed from quarterly results as filed by the companies
-(read from the database): trailing-twelve-month totals, growth, margins,
-EPS, each company's share of industry revenue, and consistency checks
-between independently reported figures. Pure functions - no network, no
-LLM, no estimates, and no market data.
-"""
 from __future__ import annotations
 
 import math
@@ -24,8 +16,6 @@ from app.schemas.industry import (
     QuarterPoint,
 )
 
-# Metrics aggregated across the peer set, with whether higher is better
-# (drives leader/laggard). None = no natural direction (e.g. size).
 AGGREGATED_METRICS: dict[str, bool | None] = {
     "revenue_ttm": None,
     "net_income_ttm": None,
@@ -35,13 +25,10 @@ AGGREGATED_METRICS: dict[str, bool | None] = {
     "profit_margin": True,
     "eps_ttm": None,
 }
-# Ratios also averaged weighted by revenue - equivalent to the margin of the
-# industry taken as a whole.
 WEIGHTED_METRICS = {"revenue_growth_yoy", "earnings_growth_yoy", "operating_margin", "profit_margin"}
 
 
 def num(value: Any) -> float | None:
-    """Coerces a value to a finite float, or None."""
     if value is None or isinstance(value, bool):
         return None
     try:
@@ -51,16 +38,11 @@ def num(value: Any) -> float | None:
     return f if math.isfinite(f) else None
 
 
-# ---- Per-company metrics -------------------------------------------------
-
-
 def _days(a: str, b: str) -> int:
     return abs((date.fromisoformat(a) - date.fromisoformat(b)).days)
 
 
 def trailing_four(filings: list[Filing], ending: str | None = None) -> list[Filing] | None:
-    """Four consecutive quarterly filings (newest first) ending at `ending`
-    (default: the latest), or None if any quarter in between is missing."""
     start = 0 if ending is None else next((i for i, f in enumerate(filings) if f.period_end == ending), None)
     if start is None:
         return None
@@ -100,8 +82,6 @@ def _check(metric: str, label: str, reported: float | None, recomputed: float | 
 
 
 def build_company_metrics(ref: IndustryCompanyRef, filings: list[Filing]) -> CompanyMetrics:
-    """One company's metrics, computed only from its stored quarterly
-    filings (newest first)."""
     metrics = CompanyMetrics(name=ref.name, short_name=ref.short_name, symbol=ref.symbol, nse=ref.nse, tier=ref.tier)
     if not filings:
         metrics.available = False
@@ -119,7 +99,6 @@ def build_company_metrics(ref: IndustryCompanyRef, filings: list[Filing]) -> Com
         for f in reversed(filings)
     ]
 
-    # ---- Trailing twelve months: the four latest consecutive filings ----
     ttm = trailing_four(filings)
     if ttm:
         metrics.revenue_ttm = _sum([f.revenue for f in ttm])
@@ -131,27 +110,21 @@ def build_company_metrics(ref: IndustryCompanyRef, filings: list[Filing]) -> Com
             metrics.profit_margin = metrics.net_income_ttm / metrics.revenue_ttm
         metrics.eps_ttm = _sum([f.eps_diluted for f in ttm])
 
-    # ---- Growth: latest quarter vs. the same quarter a year earlier ----
     prior = _year_earlier(filings, latest.period_end)
     if prior:
         metrics.revenue_growth_yoy = _growth(latest.revenue, prior.revenue)
         metrics.earnings_growth_yoy = _growth(latest.net_income, prior.net_income)
 
-    # ---- Consistency checks between independently reported figures ----
     fy = next((f for f in filings if f.annual_revenue is not None), None)
     fy_quarters = trailing_four(filings, fy.period_end) if fy else None
     fy_label = f"FY ending {fy.period_end}" if fy else "the latest fiscal year"
     missing_fy = "The four quarters of a full fiscal year aren't all available to reconcile yet."
-    # Basic EPS divides by the WEIGHTED-average share count, which lies
-    # between the counts at the start and end of the quarter (a buyback or
-    # share issue mid-quarter moves it). So the EPS-implied share count is
-    # compared with whichever quarter-end count it's closer to.
     implied_shares = latest.net_income / latest.eps_basic if latest.net_income and latest.eps_basic else None
     prev_shares = filings[1].shares if len(filings) > 1 else None
     counts = [c for c in (latest.shares, prev_shares) if c]
     nearest = min(counts, key=lambda c: abs(c - implied_shares)) if implied_shares and counts else None
     if implied_shares and len(counts) == 2 and min(counts) <= implied_shares <= max(counts):
-        nearest = implied_shares  # inside the range: consistent by construction
+        nearest = implied_shares
     checks = [
         _check("revenue_ttm", "Quarterly filings add up to the annual report (revenue)",
                fy.annual_revenue if fy else None, _sum([f.revenue for f in fy_quarters]) if fy_quarters else None, 1.5,
@@ -181,13 +154,7 @@ def build_company_metrics(ref: IndustryCompanyRef, filings: list[Filing]) -> Com
     return metrics
 
 
-# ---- Industry aggregates -----------------------------------------------------
-
-
 def compute_revenue_share(companies: list[CompanyMetrics]) -> Concentration:
-    """How the industry's revenue is split: each company's share, the
-    Herfindahl-Hirschman index, and its reciprocal - the "effective number
-    of companies" the industry's revenue is really spread across."""
     with_rev = [c for c in companies if c.revenue_ttm]
     total = sum(c.revenue_ttm for c in with_rev)
     if not total:
@@ -240,9 +207,6 @@ def build_insights(
     aggregates: dict[str, MetricAggregate],
     concentration: Concentration,
 ) -> list[Insight]:
-    """Plain-language takeaways, each derived from a specific computed
-    figure - templated, not generated, so every sentence is traceable to
-    the numbers on the page."""
     by_short = {c.short_name: c for c in companies}
     out: list[Insight] = []
 

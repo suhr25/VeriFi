@@ -1,17 +1,9 @@
-"""ipos
-
-Revision ID: b1e6c9a2f0d4
-Revises: 9d383904ae36
-Create Date: 2026-10-06 12:00:00.000000
-
-"""
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
 
 
-# revision identifiers, used by Alembic.
 revision: str = 'b1e6c9a2f0d4'
 down_revision: Union[str, Sequence[str], None] = '9d383904ae36'
 branch_labels: Union[str, Sequence[str], None] = None

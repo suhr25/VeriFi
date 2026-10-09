@@ -37,8 +37,6 @@ function StatusPill({ status }: { status: string }) {
   return <span className={`ipo-status ipo-status-${status}`}>{status === "open" && <i className="ipo-status-dot" />}{STATUS_LABEL[status] ?? status}</span>;
 }
 
-// ---- List view ---------------------------------------------------------------
-
 export function IpoListView({ onOpen }: { onOpen: (ipoId: string) => void }) {
   const [ipos, setIpos] = useState<IpoSummary[] | null>(null);
   const [error, setError] = useState("");
@@ -92,13 +90,8 @@ export function IpoListView({ onOpen }: { onOpen: (ipoId: string) => void }) {
   </div>;
 }
 
-// ---- Detail view --------------------------------------------------------------
-
 type DetailTab = string;
 
-// Known payload sections, in display order. Any payload key not listed here
-// still gets a tab (see sections below) - this list just gives the common
-// ones a proper label and icon instead of a humanized guess.
 const SECTION_META: { key: string; label: string; icon: ReactNode }[] = [
   { key: "financials", label: "Financials", icon: <TrendingUp size={15} /> },
   { key: "balance_sheet", label: "Balance sheet", icon: <Landmark size={15} /> },
@@ -118,9 +111,6 @@ function humanizeKey(key: string): string {
   return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-/** Payload sections are freeform JSON (structure varies IPO to IPO), so they
- * render generically: a list of objects becomes a table, a list of strings
- * becomes a list, anything else is shown as label/value pairs. */
 function PayloadSection({ data }: { data: unknown }) {
   if (data == null) return null;
   if (Array.isArray(data)) {
@@ -205,8 +195,6 @@ export function IpoDetailView({ ipoId, onBack }: { ipoId: string; onBack: () => 
     for (const meta of SECTION_META) {
       if (has(meta.key)) list.push({ id: meta.key, label: meta.label, icon: meta.icon, render: () => <article className="report-text"><PayloadSection data={payload[meta.key]} /></article> });
     }
-    // Anything the author added that isn't in SECTION_META still gets a tab,
-    // so a new payload shape never silently disappears from the page.
     for (const key of Object.keys(payload)) {
       if (key === "overview" || known.has(key) || !has(key)) continue;
       list.push({ id: key, label: humanizeKey(key), icon: <Sparkles size={15} />, render: () => <article className="report-text"><PayloadSection data={payload[key]} /></article> });

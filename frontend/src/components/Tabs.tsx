@@ -2,8 +2,6 @@ import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 export interface TabDef<T extends string> { id: T; label: string; icon?: ReactNode; count?: number }
 
-/** Tab bar with one indicator that slides and resizes to the active tab,
- * instead of each tab repainting its own background. */
 export function Tabs<T extends string>({ tabs, active, onChange, label }: { tabs: TabDef<T>[]; active: T; onChange: (id: T) => void; label: string }) {
   const bar = useRef<HTMLDivElement>(null);
   const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(null);

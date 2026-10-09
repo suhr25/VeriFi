@@ -1,8 +1,3 @@
-"""Multi-Source Retriever: fans a ResearchPlan's sub-queries and companies
-out to the web search adapter and financial data adapters, deduplicates the
-results, and persists every Source via the repository layer so provenance
-(including full document_text) is never lost.
-"""
 from __future__ import annotations
 
 import logging
@@ -20,10 +15,6 @@ from app.storage import repositories as repo
 
 logger = logging.getLogger("financial_research_agent.retrieval.source_retriever")
 
-# Upper bound on sources kept per retrieval round. Every source costs an
-# LLM extraction call's worth of tokens, which under a per-minute token
-# budget translates directly into wall-clock latency - see
-# app/llm/rate_limiter.py and ClaimExtractor's batching constants.
 MAX_SOURCES_PER_RETRIEVAL = 6
 
 # Concurrency for the independent external fetches in one retrieval round.
@@ -33,9 +24,6 @@ MAX_RETRIEVAL_WORKERS = 6
 
 
 def _tag_company(sources: list[Source], company_name: str) -> list[Source]:
-    """Stamps which company a retrieved source is about into its metadata,
-    so the Claim Extractor can attribute claims to the right company in
-    multi-company (comparison) research runs instead of guessing."""
     for source in sources:
         source.metadata["company_name"] = company_name
     return sources
@@ -48,18 +36,12 @@ class SourceRetriever:
         self.sec_provider = SECEdgarProvider()
         self._stored_cache: dict = {}
 
-    # ---- Individual retrieval tasks (run concurrently by retrieve) ------
-
     def _fetch_sec(self, company, period) -> list[Source]:
-        # Companies VeriFi holds are covered by their stored filings (see
-        # _fetch_financial); SEC EDGAR only applies to US registrants.
         if self._stored(company) is not None:
             return []
         return _tag_company(self.sec_provider.fetch(company, period), company.name)
 
     def _fetch_financial(self, company, period) -> list[Source]:
-        # Database first: a company VeriFi holds gets its verified, stored
-        # figures - never a third-party aggregator's copy.
         stored = self._stored(company)
         if stored is not None:
             return _tag_company([stored], company.name)
@@ -104,21 +86,12 @@ class SourceRetriever:
         collected: list[Source] = []
         if tasks:
             with ThreadPoolExecutor(max_workers=min(len(tasks), MAX_RETRIEVAL_WORKERS)) as pool:
-                # Submit in order and read results in order so retrieval
-                # output stays deterministic regardless of completion order.
                 for future in [pool.submit(task) for task in tasks]:
                     try:
                         collected.extend(future.result())
                     except Exception as exc:  # noqa: BLE001
                         logger.warning("A retrieval task failed (%s); continuing with other sources", exc)
 
-        # Dedup by URL as well as by exact text. Different sub-queries
-        # routinely return the SAME document with slightly different search
-        # snippets (e.g. one press release matching "revenue", "net income"
-        # and "EPS" queries), so a text-only hash let the same document
-        # through several times - wasting an LLM extraction call on each
-        # copy and producing duplicate claims that then showed up as
-        # spurious "conflicts" between a source and itself.
         deduped: list[Source] = []
         seen_urls: set[str] = set()
         for source in collected:
@@ -133,10 +106,6 @@ class SourceRetriever:
             seen_text_hashes.add(h)
             deduped.append(source)
 
-        # Bound worst-case work per run: keep the most trustworthy sources
-        # first (SourceTier.rank: primary filings > financial APIs > press >
-        # aggregators) so the cap drops the weakest evidence, never the
-        # strongest.
         if len(deduped) > MAX_SOURCES_PER_RETRIEVAL:
             deduped.sort(key=lambda s: s.source_tier.rank)
             logger.info(

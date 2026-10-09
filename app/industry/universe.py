@@ -1,8 +1,3 @@
-"""Industry universes: which companies make up each industry the dashboard
-covers. Defined as data in sample_data/industries.json, so adding an
-industry (or swapping a constituent after an index rebalance) is a JSON
-edit, not a code change.
-"""
 from __future__ import annotations
 
 import json
@@ -42,15 +37,10 @@ def summarize(industry: IndustryDefinition) -> IndustrySummary:
 
 
 def industry_for_company(symbol: str) -> IndustryDefinition | None:
-    """The industry universe a company (by NSE symbol) belongs to."""
     return next((ind for ind in _load() if any(c.nse == symbol for c in ind.companies)), None)
 
 
 def find_universe_company(text: str) -> IndustryCompanyRef | None:
-    """Matches a company mention against every industry universe by NSE
-    symbol, Yahoo symbol, or alias (whole words, case-insensitive). The
-    universe is checked BEFORE the SEC ticker directory by CompanyResolver:
-    "TCS" on SEC EDGAR is The Container Store, not Tata Consultancy."""
     needle = text.strip().lower()
     if not needle:
         return None
@@ -63,9 +53,6 @@ def find_universe_company(text: str) -> IndustryCompanyRef | None:
 
 
 def find_universe_mentions(text: str) -> list[IndustryCompanyRef]:
-    """All universe companies mentioned anywhere in free text, in order of
-    first appearance. Longer aliases are matched first so "hcl
-    technologies" wins over a bare "hcl"."""
     hits: list[tuple[int, IndustryCompanyRef]] = []
     for industry in _load():
         for company in industry.companies:

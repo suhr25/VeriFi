@@ -1,10 +1,3 @@
-"""Hand-labelled evaluation set for the ConflictDetector (PRD section 18:
-"conflict detection precision/recall"). Each case is a pair of numeric
-claims about the same entity+metric with a ground-truth label for whether
-they represent a genuine conflict, an explainable non-conflict (basis/
-period/unit mismatch), or plain agreement (no conflict should be raised at
-all).
-"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -23,8 +16,8 @@ class ConflictEvalCase:
     unit_b: str
     period_b: str
     basis_b: str
-    expected_conflict_raised: bool  # should ConflictDetector emit a Conflict object at all?
-    expected_is_genuine: bool | None  # if raised, should is_genuine_conflict be True?
+    expected_conflict_raised: bool
+    expected_is_genuine: bool | None
     scenario: str
 
 

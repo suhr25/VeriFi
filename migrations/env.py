@@ -1,6 +1,3 @@
-"""Alembic environment. The database URL and table metadata both come from
-the application itself, so `alembic upgrade head` always targets the same
-database the app uses (DATABASE_URL in .env)."""
 from logging.config import fileConfig
 
 from alembic import context
@@ -43,7 +40,6 @@ def run_migrations_online() -> None:
 
 
 def _run(connection) -> None:
-    # render_as_batch lets the same migrations run on SQLite (tests) too.
     context.configure(connection=connection, target_metadata=target_metadata, render_as_batch=True, compare_type=True)
     with context.begin_transaction():
         context.run_migrations()

@@ -1,4 +1,3 @@
-"""Magic-link email delivery through Brevo or Resend (HTTP mocked)."""
 import httpx
 import pytest
 

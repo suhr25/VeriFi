@@ -1,8 +1,3 @@
-"""Repository layer: translates between Pydantic schemas (app/schemas/) and
-ORM rows (app/storage/models.py). Every other module in the app talks to
-storage exclusively through these functions - nobody else touches the ORM
-or writes raw SQL.
-"""
 from __future__ import annotations
 
 import json
@@ -37,8 +32,6 @@ def _dump(model) -> dict:
     return json.loads(model.model_dump_json())
 
 
-# ---- Research runs ----------------------------------------------------
-
 def save_research_run(db: Session, run: ResearchRun) -> None:
     existing = db.get(ResearchRunORM, run.research_run_id)
     payload = _dump(run)
@@ -65,8 +58,6 @@ def get_research_run(db: Session, research_run_id: str) -> ResearchRun | None:
     return ResearchRun.model_validate(row.payload) if row else None
 
 
-# ---- Sources ------------------------------------------------------------
-
 def save_source(db: Session, research_run_id: str, source: Source) -> None:
     db.add(
         SourceORM(
@@ -90,8 +81,6 @@ def get_source(db: Session, source_id: str) -> Source | None:
     row = db.get(SourceORM, source_id)
     return Source.model_validate(row.payload) if row else None
 
-
-# ---- Claims ---------------------------------------------------------------
 
 def save_claim(db: Session, research_run_id: str, claim: Claim) -> None:
     db.merge(
@@ -120,8 +109,6 @@ def get_claim(db: Session, claim_id: str) -> Claim | None:
     return Claim.model_validate(row.payload) if row else None
 
 
-# ---- Evidence ---------------------------------------------------------------
-
 def save_evidence(
     db: Session, research_run_id: str, source_id: str, claim_id: str | None, evidence: Evidence
 ) -> None:
@@ -136,8 +123,6 @@ def save_evidence(
     )
     db.commit()
 
-
-# ---- Verification results --------------------------------------------------
 
 def save_verification_result(db: Session, research_run_id: str, result: VerificationResult) -> None:
     db.add(
@@ -159,8 +144,6 @@ def get_verification_results_for_run(db: Session, research_run_id: str) -> list[
     return [VerificationResult.model_validate(r.payload) for r in rows]
 
 
-# ---- Conflicts ------------------------------------------------------------
-
 def save_conflict(db: Session, research_run_id: str, conflict: Conflict) -> None:
     db.add(
         ConflictORM(
@@ -180,8 +163,6 @@ def get_conflicts_for_run(db: Session, research_run_id: str) -> list[Conflict]:
     return [Conflict.model_validate(r.payload) for r in rows]
 
 
-# ---- Reports ------------------------------------------------------------
-
 def save_report(db: Session, research_run_id: str, report: Report) -> None:
     existing = db.scalar(select(ReportORM).where(ReportORM.research_run_id == research_run_id))
     payload = _dump(report)
@@ -197,14 +178,10 @@ def get_report_for_run(db: Session, research_run_id: str) -> Report | None:
     return Report.model_validate(row.payload) if row else None
 
 
-# ---- IPOs -----------------------------------------------------------------
-
 def list_ipos(db: Session, board: str | None = None) -> list[IpoORM]:
     stmt = select(IpoORM)
     if board:
         stmt = stmt.where(IpoORM.board == board)
-    # Soonest-closing first: open IPOs lead, then upcoming by open date, then
-    # everything else by most recently updated.
     rows = db.scalars(stmt).all()
     order = {"open": 0, "upcoming": 1, "closed": 2, "listed": 3}
     return sorted(rows, key=lambda r: (order.get(r.status, 9), r.open_date or date.max))

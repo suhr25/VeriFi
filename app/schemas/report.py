@@ -6,28 +6,21 @@ from pydantic import BaseModel, Field
 
 
 class ReportSection(BaseModel):
-    """One section of the generated report. `claim_ids` links every factual
-    statement in `content` back to a verified Claim object - the report
-    generator must not restate facts that aren't backed by a claim_id."""
-
     title: str
     content: str
     claim_ids: list[str] = Field(default_factory=list)
 
 
 class ComparisonTable(BaseModel):
-    """A metric-by-source (conflict) or metric-by-company (multi-company
-    comparison) comparison table for display."""
-
     title: str
     columns: list[str]
-    rows: list[dict]  # each row: {"metric": ..., <column>: value, ...}
+    rows: list[dict]
 
 
 class Report(BaseModel):
     report_id: str = Field(default_factory=lambda: f"rpt_{uuid4().hex[:12]}")
     research_run_id: str
-    company_summary: str  # e.g. "Apple Inc. (AAPL) - Q3 2024"
+    company_summary: str
     executive_overview: ReportSection
     financial_performance: ReportSection
     key_metrics: ReportSection

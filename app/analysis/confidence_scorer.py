@@ -1,21 +1,7 @@
-"""Confidence Scorer (PRD section 14).
-
-A transparent, inspectable weighted sum - never "ask the LLM to grade
-itself a confidence score". Every component is independently computable and
-the weights are named constants at module level so they are easy to find,
-tune, and cite in the viva/README.
-
-`confidence` here means: how confident the system is in its verification
-VERDICT (whatever that verdict is - SUPPORTED, CONTRADICTED, or
-INSUFFICIENT), not "how likely the underlying fact is to be true". A
-confidently CONTRADICTED claim should score highly on this scale too - it
-means the system is sure it caught an error.
-"""
 from __future__ import annotations
 
 from app.schemas import Claim, ClaimType, Source, SourceTier, VerificationResult
 
-# Documented, configurable weights (must sum to 1.0).
 WEIGHTS = {
     "source_quality": 0.25,
     "evidence_match": 0.30,
@@ -41,7 +27,6 @@ class ConfidenceScorer:
         verifications: dict[str, VerificationResult],
         sources: dict[str, Source],
     ) -> None:
-        """Mutates each claim in place: sets `confidence` and `confidence_breakdown`."""
         for claim in claims:
             verification = verifications.get(claim.claim_id)
             if verification is None:

@@ -43,8 +43,6 @@ export function IndustryView({ industryId, onDeepDive }: { industryId: string; o
     try {
       let next = await industryApi.snapshot(industryId, refresh);
       setSnap(next);
-      // Stale-while-revalidate: the server answered from cache and is
-      // refreshing in the background - pick up the fresh copy when ready.
       for (let i = 0; next.refreshing && i < MAX_REFRESH_POLLS; i += 1) {
         await new Promise((r) => setTimeout(r, REFRESH_POLL_MS));
         next = await industryApi.snapshot(industryId);
@@ -56,7 +54,6 @@ export function IndustryView({ industryId, onDeepDive }: { industryId: string; o
   }, [industryId]);
 
   useEffect(() => { load(); }, [load]);
-  // Keep the "updated N min ago" label honest without refetching.
   useEffect(() => { const id = setInterval(() => setTick((t) => t + 1), 30000); return () => clearInterval(id); }, []);
 
   const companies = useMemo(() => (snap?.companies ?? []).filter((c) => c.available), [snap]);
@@ -142,8 +139,6 @@ export function IndustryView({ industryId, onDeepDive }: { industryId: string; o
   );
 }
 
-/** Same ticker language as the sign-in screen: every company's latest
- * twelve-month revenue and year-on-year growth, scrolling slowly. */
 function IndustryTape({ companies }: { companies: CompanyMetrics[] }) {
   if (!companies.length) return null;
   const run = [...companies].sort((a, b) => (b.revenue_ttm ?? 0) - (a.revenue_ttm ?? 0)).map((c) => {
@@ -169,7 +164,6 @@ function IndustryTape({ companies }: { companies: CompanyMetrics[] }) {
 }
 
 function Kpi({ label, num, fmt, detail }: { label: string; num?: number | null; fmt: (v: number | null | undefined) => string; detail: string }) {
-  // Counts up to the real value; the final frame is exactly fmt(num).
   const shown = useCountUp(num ?? null);
   return <div className="metric kpi"><span className="eyebrow">{label}</span><strong aria-label={fmt(num)}>{fmt(shown)}</strong><span className="metric-detail">{detail}</span></div>;
 }
@@ -190,7 +184,6 @@ function VerifyBadge({ status }: { status: CompanyMetrics["verification_status"]
   return <span className="vbadge na" title="Not enough reported data to cross-check"><CircleHelp size={13} /><span className="sr-only">unverified</span></span>;
 }
 
-// ---- Peer table -------------------------------------------------------------------
 
 function PeerTable({ companies, snap, onSelect, selected }: { companies: CompanyMetrics[]; snap: IndustrySnapshot; onSelect: (s: string) => void; selected: string | null }) {
   const [sortKey, setSortKey] = useState<MetricKey>("revenue_ttm");
@@ -258,7 +251,6 @@ function PeerTable({ companies, snap, onSelect, selected }: { companies: Company
   );
 }
 
-// ---- Positioning (dot strips) -------------------------------------------------------
 
 function Positioning({ companies, selected, onSelect }: { companies: CompanyMetrics[]; selected: string | null; onSelect: (s: string) => void }) {
   const [focus, setFocus] = useState<string | null>(selected);
@@ -282,7 +274,6 @@ function Positioning({ companies, selected, onSelect }: { companies: CompanyMetr
   );
 }
 
-// ---- Concentration -----------------------------------------------------------------------
 
 function ConcentrationPanel({ snap, companies, selected, onSelect }: { snap: IndustrySnapshot; companies: CompanyMetrics[]; selected: string | null; onSelect: (s: string) => void }) {
   const c = snap.concentration;
@@ -307,7 +298,6 @@ function Stat({ label, value: v, note }: { label: string; value: string; note: s
   return <div className="stat"><span className="eyebrow">{label}</span><strong>{v}</strong><p>{note}</p></div>;
 }
 
-// ---- Company detail panel ---------------------------------------------------------------
 
 function CompanyPanel({ company: c, companies, snap, onClose, onDeepDive }: { company: CompanyMetrics; companies: CompanyMetrics[]; snap: IndustrySnapshot; onClose: () => void; onDeepDive: (q: string) => void }) {
   useEffect(() => {

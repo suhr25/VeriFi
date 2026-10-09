@@ -1,23 +1,3 @@
-"""Verification Engine: combines the deterministic NumericMatcher and the
-LLM EntailmentChecker into one final verdict per claim (PRD section 12,
-"dual-path verification").
-
-Combination rule (documented, deterministic, and gives priority to
-non-LLM evidence per the project's core instruction "do not use the LLM for
-things that can be deterministically verified"):
-  - If the NumericMatcher found a conclusive normalized match -> SUPPORTED.
-    verify_all() doesn't even call the LLM for these (see below); verify()
-    (the single-claim path) still does, and lets a confident LLM
-    CONTRADICTED override it - e.g. catching a period/basis mismatch prose
-    alone reveals but pure number-matching cannot.
-  - If the NumericMatcher found a conclusive numeric mismatch -> CONTRADICTED.
-  - Otherwise (numeric check inconclusive, or claim is qualitative) -> defer
-    to the LLM entailment verdict.
-
-verify_all() (used by the orchestrator for a whole run) additionally skips
-the LLM call entirely for any claim the numeric matcher already resolved
-conclusively - see its docstring.
-"""
 from __future__ import annotations
 
 from app.llm import NOT_GIVEN, LLMProvider
@@ -25,9 +5,6 @@ from app.schemas import Claim, ClaimType, EntailmentResult, VerificationResult, 
 from app.verification.entailment_checker import EntailmentChecker
 from app.verification.numeric_matcher import NumericMatcher
 
-# Confidence assigned to a verdict reached from the numeric matcher alone,
-# without an LLM call - high because it's an exact/near-exact deterministic
-# string match, not a guess.
 _NUMERIC_ONLY_CONFIDENCE = 0.95
 
 
@@ -49,17 +26,6 @@ class VerificationEngine:
         )
 
     def verify_all(self, claims: list[Claim]) -> list[VerificationResult]:
-        """Batched equivalent of calling verify() per claim, with one more
-        optimization on top of batching: a claim is only sent to the LLM at
-        all if the deterministic numeric matcher didn't already reach a
-        conclusive verdict on its own. This is the project's core rule taken
-        literally ("do not use the LLM for things that can be
-        deterministically verified") - most extracted numeric claims get a
-        clean exact/normalized match, so skipping the LLM for those cuts
-        real-mode LLM call volume (and therefore latency under a paced
-        rate limit) substantially without weakening verification: a
-        deterministic string/number match doesn't become less true for not
-        also asking an LLM to confirm it."""
         if not claims:
             return []
         numeric_results = {

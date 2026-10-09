@@ -1,17 +1,9 @@
-"""google and magic link auth
-
-Revision ID: c2f4a7e91b3d
-Revises: b1e6c9a2f0d4
-Create Date: 2026-10-08 10:00:00.000000
-
-"""
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
 
 
-# revision identifiers, used by Alembic.
 revision: str = 'c2f4a7e91b3d'
 down_revision: Union[str, Sequence[str], None] = 'b1e6c9a2f0d4'
 branch_labels: Union[str, Sequence[str], None] = None

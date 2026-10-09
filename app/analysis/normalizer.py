@@ -1,15 +1,3 @@
-"""Deterministic claim normalization (PRD section 11).
-
-This is intentionally NOT LLM-based: converting "$1.2 billion" / "$1,200
-million" / "Rs. 100 crore" into a comparable magnitude, inferring
-quarterly/annual/TTM period type, and detecting currency are all things a
-regex + lookup table can do reliably and cheaply - exactly the kind of
-"can be deterministically verified" work the PRD says should not be
-delegated to an LLM (see section 3 / project instructions).
-
-Runs BEFORE conflict detection, so the ConflictDetector never has to guess
-at raw strings.
-"""
 from __future__ import annotations
 
 import re
@@ -36,9 +24,6 @@ def _detect_currency(evidence_text: str, unit: str) -> str | None:
 
 
 def normalize_value(value: str, unit: str | None, evidence_text: str) -> tuple[float | None, str | None, str | None]:
-    """Returns (magnitude, base_unit, scale_note). magnitude is expressed in
-    `base_unit` (a currency code like "USD"/"INR", or "%" for percentages,
-    or None if the raw value couldn't be parsed as a number at all)."""
     cleaned = re.sub(r"[,\s]", "", value or "")
     cleaned = cleaned.lstrip("$₹")
     try:
@@ -49,12 +34,6 @@ def normalize_value(value: str, unit: str | None, evidence_text: str) -> tuple[f
     unit_l = (unit or "").strip().lower()
     currency = _detect_currency(evidence_text, unit_l)
 
-    # Match a scale word anywhere in the unit string, not just an exact
-    # match against the whole string - an LLM-extracted unit can come back
-    # decorated ("billion USD", "USD billions", "$ billion") rather than the
-    # bare word our own mock extractors always produce. Word-boundary regex
-    # (with an optional trailing "s") avoids matching a scale word inside an
-    # unrelated token.
     scale_key = next(
         (key for key in SCALE_FACTORS if re.search(rf"\b{key}s?\b", unit_l)), None
     )

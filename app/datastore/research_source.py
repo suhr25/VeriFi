@@ -1,11 +1,3 @@
-"""The database as a research source.
-
-When the research pipeline investigates a company VeriFi holds, its
-financial figures come from the stored, verified filings - not from a
-third-party aggregator. The figures are written as one plain sentence per
-number, with the exact period and filing, so the claim extractor quotes
-them verbatim and every claim traces back to a filing.
-"""
 from __future__ import annotations
 
 from datetime import date
@@ -22,8 +14,6 @@ def _cr(v: float) -> str:
 
 
 def database_financials(company: CompanyEntity) -> Source | None:
-    """A source document built from stored filings, or None if VeriFi
-    doesn't hold this company."""
     ref = find_universe_company(company.name) or (find_universe_company(company.ticker) if company.ticker else None)
     if ref is None:
         return None

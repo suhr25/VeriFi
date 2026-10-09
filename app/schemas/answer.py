@@ -1,4 +1,3 @@
-"""A question answered straight from the VeriFi database."""
 from __future__ import annotations
 
 from typing import Literal
@@ -9,19 +8,15 @@ from app.schemas.industry import CompanyMetrics
 
 
 class ComparisonRow(BaseModel):
-    """One figure across the companies asked about."""
-
     metric: str
     label: str
     kind: Literal["inr", "pct", "pct_signed", "rupees"]
-    values: dict[str, float | None]  # keyed by company symbol (NSE)
-    leader: str | None = None        # symbol with the best value, if "better" has a direction
+    values: dict[str, float | None]
+    leader: str | None = None
     note: str | None = None
 
 
 class PeriodFigures(BaseModel):
-    """A company's figures for the specific period the question asked about."""
-
     found: bool
     label: str
     period_end: str

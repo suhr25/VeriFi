@@ -39,15 +39,6 @@ COMPLETION_ESTIMATE_RATIO = 0.4
 
 
 class _NotGiven:
-    """Sentinel distinguishing "caller didn't pass an llm, look one up from
-    settings" from "caller explicitly passed llm=None, force the mock
-    heuristic path". Every agent/extraction/verification module that takes
-    an optional `llm` constructor argument must default to NOT_GIVEN, never
-    to None directly - `llm if llm is not None else get_llm_provider()`
-    cannot tell an explicit None apart from an omitted argument, which
-    silently defeated the evaluation harness's "no live API calls"
-    guarantee whenever real credentials were configured (see git history)."""
-
     def __repr__(self) -> str:
         return "NOT_GIVEN"
 

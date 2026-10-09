@@ -1,10 +1,3 @@
-"""Period-relevance selection for SEC EDGAR companyfacts.
-
-The companyfacts payload spans many years of every concept. Emitting it
-all and letting the extractor truncate meant the requested quarter could
-be cut off entirely, leaving only unrelated annual figures in evidence -
-so a "Q3 2024" query produced FY2024/FY2023 claims.
-"""
 from app.retrieval.sec_edgar import _matches_period, _parse_requested_period
 
 
@@ -36,8 +29,6 @@ def test_rejects_wrong_quarter_and_wrong_year():
 
 
 def test_annual_entry_does_not_satisfy_a_quarterly_request():
-    """The exact bug this guards: an FY row being treated as good evidence
-    for a Q3 question."""
     assert _matches_period({"fp": "FY", "fy": 2024}, ("Q3", "2024")) is False
 
 

@@ -12,12 +12,6 @@ class SourceType(StrEnum):
 
 
 class SourceTier(StrEnum):
-    """Ordering matters: lower value = higher trust.
-
-    PRD 3.2.4: primary filings > licensed/structured financial APIs >
-    press / reputable publications > aggregators.
-    """
-
     PRIMARY_FILING = "primary_filing"
     FINANCIAL_API = "financial_api"
     PRESS = "press"
@@ -26,7 +20,6 @@ class SourceTier(StrEnum):
 
     @property
     def rank(self) -> int:
-        # Lower = more trustworthy. Used by confidence scorer & conflict resolution.
         order = {
             SourceTier.PRIMARY_FILING: 0,
             SourceTier.FINANCIAL_API: 1,

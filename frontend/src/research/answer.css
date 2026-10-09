@@ -1,4 +1,3 @@
-/* Answer from the database */
 .dba { margin-top: 18px; padding: 26px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); animation: panel-in 320ms var(--ease); }
 .dba-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .dba-source { display: inline-flex; align-items: center; gap: 7px; color: var(--teal-dark); font: 500 10.5px 'DM Mono', monospace; letter-spacing: .04em; text-transform: uppercase; }
@@ -81,7 +80,6 @@
   .dba-bar { max-width: 80px; }
 }
 
-/* ---- Refinements ---- */
 .dba { padding: var(--s-6); border-radius: var(--r-lg); box-shadow: var(--shadow-xs); }
 .dba-head h2 { font: 600 26px/1.15 var(--font-display); letter-spacing: -.03em; }
 .dba-head p { color: var(--text-secondary); font-size: 13px; }
@@ -94,7 +92,6 @@
 .dba-next.strong { border-color: rgba(162, 112, 31, .3); }
 .notice-strip { border-color: rgba(20, 149, 138, .22); border-radius: var(--r-md); background: var(--accent-soft); color: var(--text-secondary); font-size: 13px; }
 
-/* ---- Dark theme ---- */
 .dba, .dba-metric, .dba-trend, .dba-proof-card { background: linear-gradient(180deg, rgba(255,255,255,.028), rgba(255,255,255,0) 120px), var(--surface); }
 .dba-bar { background: rgba(255,255,255,.06); }
 .dba-bar i { background: var(--accent); }

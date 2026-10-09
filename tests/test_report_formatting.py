@@ -1,10 +1,3 @@
-"""Report-facing formatting of metrics and values.
-
-Two things this guards, both of which made the Financials section look
-broken in the UI:
-  - raw XBRL concept tags leaking into the report as metric names
-  - raw magnitudes (466822988000) shown instead of readable figures
-"""
 from app.analysis.normalizer import ClaimNormalizer
 from app.generation.report_generator import _is_financial_metric, humanize_metric, humanize_value
 from app.schemas import Basis, Claim, ClaimType, Evidence
@@ -51,8 +44,6 @@ def test_small_currency_value_is_not_abbreviated():
 
 
 def test_financial_metric_match_tolerates_source_specific_names():
-    """Alpha Vantage, SEC XBRL and the mock extractor each name the same
-    metric differently; all must reach the Financial Performance section."""
     for metric in ("revenue", "revenue_ttm", "revenuefromcontractwithcustomerexcludingassessedtax",
                    "annual_revenue", "operating_margin_ttm", "ebitda", "eps_diluted"):
         assert _is_financial_metric(metric), metric

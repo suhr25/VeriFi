@@ -31,8 +31,6 @@ def test_genuine_numeric_disagreement_is_flagged():
 
 
 def test_gaap_vs_adjusted_basis_mismatch_is_not_a_genuine_conflict():
-    """PRD section 13: EBITDA=$10B adjusted vs EBITDA=$8B GAAP should not be
-    blindly reported as a contradiction - the basis mismatch explains it."""
     a = _claim("Apple Inc.", "ebitda", "10", "billion", "Q3 2024", Basis.ADJUSTED, "src_a")
     b = _claim("Apple Inc.", "ebitda", "8", "billion", "Q3 2024", Basis.GAAP, "src_b")
     conflicts = ConflictDetector().detect([a, b])

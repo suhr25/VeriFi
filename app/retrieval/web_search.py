@@ -96,10 +96,6 @@ MAX_ARTICLE_CHARS = 30_000
 
 
 def fetch_article_text(url: str | None) -> str | None:
-    """The readable main text of a web page (boilerplate, menus and ads
-    stripped by trafilatura), or None if it can't be fetched or extracted -
-    the caller then falls back to the search snippet. PDFs and other
-    non-HTML documents are skipped."""
     if not url or url.lower().split("?")[0].endswith((".pdf", ".xls", ".xlsx", ".doc", ".docx", ".ppt", ".pptx")):
         return None
     try:
@@ -143,10 +139,6 @@ class SerpAPIProvider(SearchProvider):
             resp.raise_for_status()
             data = resp.json()
             results = [r for r in data.get("organic_results", [])[:max_results] if r.get("snippet")]
-            # A search snippet is ~150 characters - too little to extract a
-            # complete risk or commentary sentence from (measured: every claim
-            # from snippets was a fragment). Fetch each result's article text;
-            # the RAG layer then picks the passages relevant to the question.
             with ThreadPoolExecutor(max_workers=max(1, len(results))) as pool:
                 bodies = list(pool.map(lambda r: fetch_article_text(r.get("link")), results))
             sources = []
@@ -173,8 +165,6 @@ class SerpAPIProvider(SearchProvider):
 
 
 class MockSearchProvider(SearchProvider):
-    """Deterministic, clearly-labelled synthetic web results used in DEMO_MODE."""
-
     name = "mock_web_search"
 
     def is_available(self) -> bool:
@@ -182,10 +172,6 @@ class MockSearchProvider(SearchProvider):
 
     def search(self, query: str, max_results: int = 5) -> list[Source]:
         lowered = query.lower()
-        # Note: the header deliberately avoids ending in "." right after the
-        # query text - a query like "...major risks" would otherwise get
-        # mis-split by the (intentionally simple) mock claim extractor's
-        # sentence splitter into a bogus "risk" sentence.
         header = f"[MOCK WEB SEARCH RESULT - DEMO MODE, NOT A REAL WEB SEARCH]\n\nCoverage related to search: {query}\n\n"
         if any(k in lowered for k in ("risk", "headwind", "challenge")):
             body = (

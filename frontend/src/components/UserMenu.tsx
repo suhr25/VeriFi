@@ -10,7 +10,6 @@ export function sessionEnds(user: SessionUser): string {
     .toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 }
 
-/** Top-bar account menu. Demo users get a prominent path to a real account. */
 export function UserMenu({ user, onSignOut }: { user: SessionUser; onSignOut: (next?: "signin" | "signup") => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);

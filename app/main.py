@@ -26,17 +26,12 @@ logger = logging.getLogger("financial_research_agent")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
-    # Fill/refresh the financial data store in the background, so the first
-    # dashboard visit is answered straight from the database.
     from app.industry.service import IndustryService
     from app.industry.universe import list_industries
 
     for industry in list_industries():
         IndustryService().refresh_in_background(industry.id)
 
-    # Loading the RAG embedding model is CPU-bound and can take well over a
-    # minute on a modest machine - doing it now means the first real Ask-box
-    # question never pays that cost on the request path.
     if settings.rag_enabled:
         from app.rag import warm_up as warm_up_rag
 
@@ -49,7 +44,6 @@ async def lifespan(app: FastAPI):
         settings.llm_available,
     )
     yield
-    # Return pooled database connections cleanly when the platform stops us.
     engine.dispose()
     logger.info("Shutdown complete.")
 
@@ -74,7 +68,6 @@ if settings.cors_origin_list:
 
 app.include_router(public_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
-# Research and industry data need a signed-in or demo session.
 app.include_router(router, prefix="/api", dependencies=[Depends(require_session)])
 
 FRONTEND_DIR = BASE_DIR / "frontend" / "dist"

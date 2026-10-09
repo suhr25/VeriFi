@@ -1,8 +1,3 @@
-"""Calibration analysis (PRD section 20): given (confidence, was_correct)
-pairs from the evaluation harness, compute a Brier score and a reliability
-(calibration) curve - reproducible from the evaluation dataset, not a
-claimed/assumed number.
-"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -17,10 +12,6 @@ class CalibrationBin:
 
 
 def brier_score(predictions: list[tuple[float, bool]]) -> float:
-    """Mean squared error between predicted confidence (as a probability of
-    being correct) and the actual binary outcome. 0.0 is a perfect score,
-    0.25 is what a constant "always 50%" predictor would score on a
-    balanced set, 1.0 is the worst possible score."""
     if not predictions:
         return float("nan")
     total = sum((conf - (1.0 if correct else 0.0)) ** 2 for conf, correct in predictions)

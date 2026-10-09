@@ -1,13 +1,3 @@
-"""Keeping the database current: the API is only asked for what's missing.
-
-sync_company() lists a company's filings at the exchange and downloads only
-the ones the database doesn't already hold (matched by checksum), so a
-routine re-sync costs one listing request per company and zero downloads.
-
-Offline (DEMO_MODE) the exchange is never contacted: the database is filled
-from sample_data/filings_seed/, which holds real parsed filings captured
-from the exchange.
-"""
 from __future__ import annotations
 
 import json
@@ -37,9 +27,6 @@ def _now() -> datetime:
 
 
 def sync_company(ref: IndustryCompanyRef, industry_id: str | None) -> dict:
-    """Fetches any filings for this company that the database doesn't have
-    yet. Returns stats; raises if the source API can't be reached (the
-    ingestion log records the failure either way)."""
     db = get_session()
     run = store.start_run(db, "company_sync", ref.nse)
     try:
@@ -70,7 +57,6 @@ def sync_company(ref: IndustryCompanyRef, industry_id: str | None) -> dict:
 
 
 def seed_company(ref: IndustryCompanyRef, industry_id: str | None, seed_dir: Path = SEED_DIR) -> dict:
-    """Loads a company's filings from the bundled seed (offline mode)."""
     db = get_session()
     run = store.start_run(db, "seed", ref.nse)
     try:
@@ -96,9 +82,6 @@ def seed_company(ref: IndustryCompanyRef, industry_id: str | None, seed_dir: Pat
 
 
 def freshness(refs: list[IndustryCompanyRef]) -> tuple[list[IndustryCompanyRef], list[IndustryCompanyRef]]:
-    """Splits companies into (missing, stale): missing ones have no stored
-    filings at all, so a request must wait for them; stale ones are served
-    from the database while a background sync runs."""
     ttl = timedelta(hours=get_settings().filings_sync_hours)
     ids = [store.company_id_for(ref.nse) for ref in refs]
     db = get_session()
@@ -117,9 +100,6 @@ def freshness(refs: list[IndustryCompanyRef]) -> tuple[list[IndustryCompanyRef],
 
 
 def refresh(refs: list[IndustryCompanyRef], industry_id: str | None) -> list[str]:
-    """Brings the given companies up to date - from the exchange in live
-    mode, from the seed offline. Returns human-readable warnings for any
-    company that couldn't be refreshed (its stored data is still served)."""
     warnings = []
     offline = get_settings().effective_demo_mode
     for ref in refs:

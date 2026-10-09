@@ -82,8 +82,6 @@ function App({ user, onSignOut }: { user: SessionUser; onSignOut: (next?: "signi
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  // Database-first answers: dbAnswer is set when the question was answered
-  // from stored filings; notice explains why full research is running instead.
   const [dbAnswer, setDbAnswer] = useState<DatabaseAnswerData | null>(null);
   const [notice, setNotice] = useState("");
   const [phase, setPhase] = useState<"answering" | "researching" | null>(null);
@@ -108,8 +106,6 @@ function App({ user, onSignOut }: { user: SessionUser; onSignOut: (next?: "signi
     setQuery(trimmed); setLoading(true); setError(""); setRun(null); setReport(null); setClaims([]); setSources([]); setConflicts([]);
     setDbAnswer(null); setNotice("");
     try {
-      // 1. Database first - answered from stored, verified filings in
-      //    milliseconds whenever VeriFi holds the companies asked about.
       if (!options.fullResearch) {
         setPhase("answering");
         const answer = await api.answer(trimmed);
@@ -119,15 +115,12 @@ function App({ user, onSignOut }: { user: SessionUser; onSignOut: (next?: "signi
         }
         setNotice(`${answer.reason} Running full research from live sources instead - this takes a few minutes (a recent run of the same question is reused instantly).`);
       }
-      // 2. Otherwise full research (reused instantly if the same question
-      //    was researched recently).
       setPhase("researching");
       // The pipeline runs in the background on the server - this call
       // returns immediately with status="pending" and a run id. We poll
       // for live status instead of blocking on one long request, so the
       // UI can show real progress (and never silently hangs on a
       // multi-minute real-data run).
-      // Not forced fresh: a recent run of the same question is reused instantly.
       const startedRun = await api.startResearch(trimmed);
       setRun(startedRun);
 
@@ -228,7 +221,6 @@ const METRIC_LABELS: Record<string, string> = {
   market_cap: "Market cap", pe_ratio: "P/E ratio",
 };
 
-/** Mirrors the backend's humanize_metric: raw XBRL tags are unreadable in a report. */
 function metricLabel(metric: string): string {
   const key = metric.trim().toLowerCase();
   if (METRIC_LABELS[key]) return METRIC_LABELS[key];
@@ -241,7 +233,6 @@ function metricLabel(metric: string): string {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
-/** Renders 466822988000 as $466.82B and 0.326 as 32.6%. */
 function metricValue(claim: Claim): string {
   const isPercent = claim.normalized?.base_unit === "%" || claim.unit === "%"
     || /margin|growth/i.test(claim.metric);
@@ -254,8 +245,6 @@ function metricValue(claim: Claim): string {
   const mag = claim.normalized?.magnitude;
   if (mag == null) return `${raw}${claim.unit ? ` ${claim.unit}` : ""}`;
   const base = claim.normalized?.base_unit ?? "";
-  // Only show a currency symbol when the currency is actually known.
-  // Rupee amounts use the same crore / lakh-crore notation as the rest of VeriFi.
   if (base === "INR") return inrFmt(mag);
   const sym = base === "USD" ? "$" : "";
   const abs = Math.abs(mag);
@@ -268,14 +257,12 @@ function metricValue(claim: Claim): string {
 const FINANCIAL_KEYS = ["revenue", "netincome", "operatingincome", "operatingmargin", "profitmargin", "ebitda", "revenuegrowth", "eps", "cash", "debt", "marketcap", "peratio"];
 
 function FinancialsTab({ claims, section }: { claims: Claim[]; section: { content: string; claim_ids: string[] } }) {
-  // Keep the strongest verdict per metric so one figure isn't listed many times.
   const rank = (s?: string | null) => (s === "supported" ? 3 : s === "contradicted" ? 2 : s === "insufficient" ? 1 : 0);
   const financial = claims.filter((c) => {
     if (c.claim_type !== "numeric") return false;
     const k = c.metric.toLowerCase().replace(/_/g, "");
     return FINANCIAL_KEYS.some((core) => k.includes(core));
   });
-  // One figure per company per metric (strongest verdict wins).
   const best = new Map<string, Claim>();
   for (const c of financial) {
     const key = `${c.entity}::${metricLabel(c.metric)}`;

@@ -37,7 +37,6 @@
   .pstep p { flex-basis: 100%; }
 }
 
-/* ---- Refinements ---- */
 .pipeline { padding: var(--s-6); border-radius: var(--r-lg); box-shadow: var(--shadow-xs); }
 .pipeline.running { border-color: rgba(20, 149, 138, .3); background: var(--surface); }
 .pipeline-head h3 { font: 600 var(--text-section)/1.25 var(--font-display); letter-spacing: -.02em; }
@@ -49,8 +48,6 @@
 .pstep.active { border-color: rgba(20, 149, 138, .45); box-shadow: var(--shadow-sm); }
 .pipeline-badge, .pipeline-time { font-size: 12px; }
 
-/* Steps sit inside the pipeline panel, so they are columns with dividers,
-   not a second layer of cards. Only the live step gets a surface. */
 .pipeline-steps { gap: 0; }
 .pstep { border: 0; border-left: 1px solid var(--border-subtle); border-radius: 0; background: transparent; padding: var(--s-2) var(--s-4); }
 .pstep:first-child { border-left: 0; padding-left: 0; }
@@ -68,7 +65,6 @@
   .pstep.active { padding: var(--s-3); }
 }
 
-/* ---- Dark theme ---- */
 .pipeline { background: linear-gradient(180deg, rgba(255,255,255,.028), rgba(255,255,255,0) 120px), var(--surface); }
 .pipeline.running .pipeline-track span::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); }
 .pipeline-track span { box-shadow: 0 0 12px rgba(63,214,196,.6); }

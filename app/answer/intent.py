@@ -1,10 +1,3 @@
-"""Understanding a question well enough to answer it from the database.
-
-Deterministic - no LLM - so it costs nothing and runs in microseconds:
-which companies are mentioned, whether it's a comparison, which figures
-are asked about, which period, and whether it also asks something the
-financial tables can't answer (risks, news, strategy...).
-"""
 from __future__ import annotations
 
 import re
@@ -14,7 +7,6 @@ from datetime import date
 from app.industry.universe import find_universe_mentions
 from app.schemas.industry import IndustryCompanyRef
 
-# Words -> the figures they ask about. Order matters only for display.
 METRIC_WORDS: list[tuple[str, list[str]]] = [
     (r"\b(revenue|revenues|sales|top[\s-]?line|turnover|income from operations)\b", ["revenue_ttm", "revenue_growth_yoy"]),
     (r"\b(net profit|profit|profits|net income|earnings|bottom[\s-]?line|pat)\b", ["net_income_ttm", "earnings_growth_yoy"]),
@@ -26,7 +18,6 @@ METRIC_WORDS: list[tuple[str, list[str]]] = [
 ALL_METRICS = ["revenue_ttm", "revenue_growth_yoy", "net_income_ttm", "earnings_growth_yoy",
                "operating_margin", "profit_margin", "eps_ttm", "revenue_share"]
 
-# Things the financial tables can't answer - need documents or research.
 QUALITATIVE = re.compile(
     r"\b(risk|risks|news|strategy|outlook|guidance|management|ceo|deal|deals|acquisition|acquisitions|"
     r"attrition|headcount|employees|clients|customers|ai|lawsuit|litigation|why|explain|future|plans?)\b",
@@ -40,7 +31,7 @@ MONTH_END = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 
 
 @dataclass
 class PeriodRequest:
-    kind: str  # "quarter" | "annual"
+    kind: str
     period_end: date
     label: str
 
@@ -63,7 +54,6 @@ def _year(text: str) -> int:
 
 
 def _quarter_end_fy(q: int, fy: int) -> date:
-    """Indian fiscal year FYn runs Apr (n-1) - Mar n: Q1 ends Jun (n-1)."""
     return {1: date(fy - 1, 6, 30), 2: date(fy - 1, 9, 30), 3: date(fy - 1, 12, 31), 4: date(fy, 3, 31)}[q]
 
 
@@ -77,7 +67,6 @@ def parse_period(text: str) -> PeriodRequest | None:
         fy = _year(m.group(1))
         return PeriodRequest("annual", date(fy, 3, 31), f"FY{str(fy)[-2:]} (April {fy - 1} - March {fy})")
     if m := re.search(r"\bq([1-4])\s*(?:of\s*)?(\d{4})\b", t):
-        # "Q3 2024" is read as a calendar quarter (Jul-Sep 2024).
         q, y = int(m.group(1)), int(m.group(2))
         month = q * 3
         end = date(y, month, MONTH_END[month])

@@ -56,13 +56,8 @@ def _get(url: str, referer: str = BASE + "/"):
     raise NSEError(f"NSE refused {url.split('?')[0]}")
 
 
-# ---- Filings -----------------------------------------------------------------
-
-
 @dataclass
 class Filing:
-    """One quarterly result, parsed from the company's XBRL filing."""
-
     symbol: str
     period_start: str
     period_end: str
@@ -71,7 +66,7 @@ class Filing:
     revision: str | None
     url: str
     revenue: float | None = None
-    net_income: float | None = None           # attributable to owners of the parent
+    net_income: float | None = None
     profit_before_exceptional_and_tax: float | None = None
     profit_before_tax: float | None = None
     finance_costs: float | None = None
@@ -80,11 +75,9 @@ class Filing:
     eps_diluted: float | None = None
     paid_up_capital: float | None = None
     face_value: float | None = None
-    # Twelve-month figures, present in the March (fiscal year-end) filing.
     annual_start: str | None = None
     annual_revenue: float | None = None
     annual_net_income: float | None = None
-    # Corrections applied to the company's own tagging, shown to the user.
     notes: list[str] = field(default_factory=list)
 
     @property
@@ -95,9 +88,6 @@ class Filing:
 
     @property
     def operating_profit(self) -> float | None:
-        """Operating profit = profit before exceptional items and tax,
-        plus finance costs, less other income - i.e. earnings from the
-        business itself, excluding treasury income and one-offs."""
         base = self.profit_before_exceptional_and_tax if self.profit_before_exceptional_and_tax is not None else self.profit_before_tax
         if base is None or self.finance_costs is None or self.other_income is None:
             return None
@@ -108,7 +98,6 @@ _CONTEXT_RE = re.compile(r'<xbrli:context id="([^"]+)">(.*?)</xbrli:context>', r
 
 
 def _fact_values(xml: str, tag: str) -> list[tuple[str, str]]:
-    """(contextRef, value) for every occurrence of an in-bse-fin fact."""
     out = []
     for attrs, value in re.findall(rf"<in-[a-z-]+:{tag}\b([^>]*)>([^<]*)<", xml):
         ctx = re.search(r'contextRef="([^"]+)"', attrs)
@@ -118,12 +107,6 @@ def _fact_values(xml: str, tag: str) -> list[tuple[str, str]]:
 
 
 def parse_filing_xbrl(xml: str, meta: dict) -> Filing:
-    """Extracts the figures we use from one results filing.
-
-    A results filing contains several reporting contexts (this quarter,
-    year-to-date, sometimes segments). Only dimension-free contexts are
-    used, and the quarter vs. twelve-month figure is chosen by the
-    context's own start/end dates - never by position in the file."""
     contexts: dict[str, tuple[str, str]] = {}
     for cid, body in _CONTEXT_RE.findall(xml):
         if "explicitMember" in body or "typedMember" in body:
@@ -165,12 +148,6 @@ def parse_filing_xbrl(xml: str, meta: dict) -> Filing:
     notes: list[str] = []
 
     def owners_profit(lo: int, hi: int, label: str) -> float | None:
-        """Profit attributable to owners of the parent. Companies sometimes
-        mis-tag this fact (measured: Tech Mahindra Dec-2025 filed Rs 198.7 Cr
-        against total profit of Rs 1,118.6 Cr; Persistent Jun-2026 filed 0).
-        The accounting identity owners = total profit - minority interest
-        must hold, so when the tagged value breaks it the identity is used
-        and the correction is recorded for display."""
         tagged, _ = pick("ProfitOrLossAttributableToOwnersOfParent", lo, hi)
         total, _ = pick("ProfitLossForPeriod", lo, hi)
         nci, _ = pick("ProfitOrLossAttributableToNonControllingInterests", lo, hi)

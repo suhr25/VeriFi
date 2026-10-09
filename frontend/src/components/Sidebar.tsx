@@ -20,12 +20,6 @@ export interface NavSection { label: string; items: NavItem[] }
 const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
 export const TOGGLE_HINT = isMac ? "⌘B" : "Ctrl+B";
 
-/**
- * Collapsible navigation rail. Collapsed, it is just the VeriFi mark plus
- * icons: hovering the mark turns it into an "expand" affordance, and each
- * icon shows its label as a tooltip. On phones it becomes an off-canvas
- * drawer instead (mobileOpen).
- */
 export function Sidebar({
   sections, collapsed, onToggle, mobileOpen, onCloseMobile, user, status,
 }: {

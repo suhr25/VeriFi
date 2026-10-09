@@ -107,8 +107,6 @@ def start_research(req: ResearchRequest, db: Session = Depends(db_session), prin
     GET /research/{id} for live status until it reaches complete/failed."""
     from app.agents.research_orchestrator import PIPELINE_VERSION, ResearchOrchestrator
 
-    # Reuse: the same question researched recently is answered from the
-    # stored run instead of re-running the whole pipeline.
     if not req.fresh:
         since = _now() - timedelta(hours=get_settings().research_reuse_hours)
         wanted = normalize_query(req.query)
@@ -118,7 +116,7 @@ def start_research(req: ResearchRequest, db: Session = Depends(db_session), prin
                 continue
             run = repo.get_research_run(db, row.research_run_id)
             if run is None or run.pipeline_version != PIPELINE_VERSION:
-                continue  # produced by an older pipeline - research it again
+                continue
             log_search(db, req.query, "cache", principal, run_id=row.research_run_id, elapsed_ms=0)
             return run
 
@@ -162,8 +160,6 @@ def get_research_report(research_id: str, db: Session = Depends(db_session)):
         raise HTTPException(status_code=404, detail="report not found")
     return report
 
-
-# ---- IPO Centre -------------------------------------------------------
 
 def _ipo_summary(row) -> IpoSummary:
     return IpoSummary(

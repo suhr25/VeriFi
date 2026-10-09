@@ -22,10 +22,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    # Mode
     demo_mode: bool = True
 
-    # LLM
     llm_provider: Literal["openai", "groq"] = "groq"
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o"
@@ -38,34 +36,22 @@ class Settings(BaseSettings):
     # instead of racing the limit and falling back to mock under load.
     llm_tpm_limit: int | None = None
 
-    # Search
     search_provider: Literal["tavily", "serpapi"] = "tavily"
     tavily_api_key: str | None = None
     serpapi_api_key: str | None = None
 
-    # Financial data
     sec_edgar_user_agent: str = "Financial Research Agent OJT Project contact@example.com"
     alphavantage_api_key: str | None = None
 
-    # Storage. Hosted providers (Render, Heroku, Neon...) hand out
-    # postgres:// or postgresql:// URLs; see _normalise_database_url.
     database_url: str = "sqlite:///./data/financial_research_agent.db"
 
-    # Agent loop limits (see PRD 5.1: unbounded iterations is a named risk)
     max_followup_iterations: int = 2
     max_research_queries: int = 12
     max_subqueries_per_plan: int = 6
 
-    # Financial data store: a company's stored filings older than this are
-    # still served straight from the database, while a background sync checks
-    # the source API for newer filings (database first, API as fallback).
     filings_sync_hours: int = 12
-    # A completed research run is reused for the same question asked again
-    # within this window, instead of re-running the whole pipeline.
     research_reuse_hours: int = 72
 
-    # Auth (app/auth): session cookie lifetimes. Set SESSION_COOKIE_SECURE=true
-    # when serving over HTTPS so the cookie is never sent in clear text.
     user_session_days: int = 7
     demo_session_hours: int = 2
     session_cookie_secure: bool = False
@@ -117,13 +103,8 @@ class Settings(BaseSettings):
     # third-party-cookie caveat.
     session_cookie_samesite: Literal["lax", "strict", "none"] = "lax"
 
-    # Local sentence-transformers embeddings for RAG (app/rag/indexer.py).
-    # Loading the model needs roughly 600-700 MB of RAM; on small instances
-    # (e.g. Render free/starter, 512 MB) set this to false and long documents
-    # fall back to prefix truncation instead of crashing the server.
     rag_enabled: bool = True
 
-    # App
     app_host: str = "0.0.0.0"
     app_port: int = 8000
     log_level: str = "INFO"
@@ -131,8 +112,6 @@ class Settings(BaseSettings):
     @field_validator("database_url")
     @classmethod
     def _normalise_database_url(cls, url: str) -> str:
-        """SQLAlchemy reads a bare postgres:// URL as the psycopg2 driver,
-        which isn't installed; this app uses psycopg 3."""
         for prefix in ("postgres://", "postgresql://"):
             if url.startswith(prefix):
                 return "postgresql+psycopg://" + url[len(prefix):]

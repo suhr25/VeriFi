@@ -1,13 +1,3 @@
-"""IPO Centre schemas.
-
-An IPO's fixed listing details are plain fields; everything else that
-varies document to document (financial summary table, objects of issue,
-risk factors, promoters, anchor investors...) lives in `payload` as
-freeform JSON - mirrored by IpoDetail.payload below. The Ask endpoint
-never touches payload - it answers only from the stored report_text (see
-IpoAskResponse.grounded), so a structured field and a free-text answer can
-never silently drift apart.
-"""
 from __future__ import annotations
 
 from datetime import date, datetime
@@ -39,7 +29,7 @@ class IpoDetail(IpoSummary):
     lead_managers: list[str] = []
     about: str | None = None
     payload: dict = {}
-    has_report: bool  # whether report_text is non-empty - the Ask box depends on this
+    has_report: bool
     updated_at: datetime
 
 
@@ -49,8 +39,5 @@ class IpoAskRequest(BaseModel):
 
 class IpoAskResponse(BaseModel):
     answer: str
-    # True = the LLM answered strictly from a retrieved excerpt of the
-    # stored report. False = no LLM was available and the excerpt itself is
-    # shown instead - still grounded, just not phrased as a sentence.
     grounded: bool
     excerpt: str | None = None

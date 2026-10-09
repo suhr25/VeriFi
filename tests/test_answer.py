@@ -1,6 +1,3 @@
-"""Database-first answering: questions about companies VeriFi holds are
-answered from stored filings; research runs are reused; every search is
-logged."""
 from datetime import date, datetime
 
 import pytest
@@ -21,9 +18,6 @@ def client():
     return c
 
 
-# ---- Understanding the question -------------------------------------------------
-
-
 def test_comparison_of_two_held_companies():
     it = parse("Compare TCS and Wipro")
     assert [c.nse for c in it.companies] == ["TCS", "WIPRO"]
@@ -38,10 +32,10 @@ def test_metrics_and_qualitative_terms():
 
 
 @pytest.mark.parametrize("text, kind, end", [
-    ("Wipro Q1 FY27 profit", "quarter", date(2026, 6, 30)),      # Indian FY: Q1 FY27 = Apr-Jun 2026
+    ("Wipro Q1 FY27 profit", "quarter", date(2026, 6, 30)),
     ("TCS Q4 FY26 revenue", "quarter", date(2026, 3, 31)),
-    ("TCS FY26 revenue", "annual", date(2026, 3, 31)),           # FY26 = Apr 2025 - Mar 2026
-    ("Infosys revenue Q3 2024", "quarter", date(2024, 9, 30)),   # calendar quarter
+    ("TCS FY26 revenue", "annual", date(2026, 3, 31)),
+    ("Infosys revenue Q3 2024", "quarter", date(2024, 9, 30)),
     ("HCL revenue for the quarter ended June 2026", "quarter", date(2026, 6, 30)),
 ])
 def test_period_parsing(text, kind, end):
@@ -51,9 +45,6 @@ def test_period_parsing(text, kind, end):
 
 def test_unknown_company_is_not_matched():
     assert parse("Analyze Apple revenue").companies == []
-
-
-# ---- Answering from the database ----------------------------------------------------
 
 
 def test_comparison_answered_from_database(client):
@@ -90,13 +81,10 @@ def test_every_search_is_logged(client, db_session):
     assert row.answered_from == "database" and row.companies == ["INFY", "HCLTECH"] and row.elapsed_ms is not None
 
 
-# ---- Reusing research, and the database as a research source ------------------------
-
-
 def test_repeated_research_question_reuses_the_stored_run(client, db_session):
     from app.agents.research_orchestrator import PIPELINE_VERSION
 
-    old = ResearchRun(query="What is Zeta Corp's revenue outlook?", status=ResearchStatus.COMPLETE)  # pre-database pipeline
+    old = ResearchRun(query="What is Zeta Corp's revenue outlook?", status=ResearchStatus.COMPLETE)
     repo.save_research_run(db_session, old)
     run = ResearchRun(query="What is Zeta Corp's revenue outlook?", status=ResearchStatus.COMPLETE, pipeline_version=PIPELINE_VERSION)
     repo.save_research_run(db_session, run)
@@ -110,7 +98,7 @@ def test_research_pipeline_uses_stored_figures_for_held_companies():
     from app.datastore.research_source import database_financials
     from app.industry.service import IndustryService
 
-    IndustryService().get_snapshot("information-technology")  # make sure the store is filled
+    IndustryService().get_snapshot("information-technology")
     src = database_financials(CompanyEntity(name="Wipro", ticker="WIPRO.NS", resolved=True))
     assert src is not None and src.source_tier == "primary_filing"
     assert "Wipro revenue from operations for the four quarters ended" in src.document_text
@@ -134,9 +122,9 @@ def test_numbers_for_held_companies_come_only_from_the_database():
               claim(web, ClaimType.NUMERIC, entity="Apple")]
     kept = prefer_database_numbers(claims, [db_src, web])
     assert [(c.source_id == db_src.source_id, c.claim_type, c.entity) for c in kept] == [
-        (True, ClaimType.NUMERIC, "Infosys"),       # database number kept
-        (False, ClaimType.QUALITATIVE, "Infosys"),  # web risk/news kept
-        (False, ClaimType.NUMERIC, "Apple"),        # company not held: web number kept
+        (True, ClaimType.NUMERIC, "Infosys"),
+        (False, ClaimType.QUALITATIVE, "Infosys"),
+        (False, ClaimType.NUMERIC, "Apple"),
     ]
 
 
@@ -156,7 +144,7 @@ def test_searches_for_held_companies_target_what_the_database_lacks():
     )
     focused = focus_searches_on_what_the_database_lacks(plan, limit=4)
     texts = [sq.text for sq in focused.sub_queries]
-    assert not any("revenue" in t or "debt" in t for t in texts)  # the database has these
+    assert not any("revenue" in t or "debt" in t for t in texts)
     assert "Infosys risk factors" in texts
     assert f"Infosys key business risks and challenges {date.today().year}" in texts
 
@@ -183,8 +171,8 @@ def test_fragments_and_boilerplate_never_appear_as_risks():
         return Claim(research_run_id="r", claim_type=ClaimType.QUALITATIVE, entity="X", metric="risk_factor", value="v",
                      source_id="s", evidence_span=Evidence(source_id="s", start_char=0, end_char=1, evidence_text="x"), statement=statement)
 
-    assert not is_presentable_risk(claim("Growth has stalled"))                      # fragment
-    assert not is_presentable_risk(claim("constant currency growth is ..."))          # truncated snippet
+    assert not is_presentable_risk(claim("Growth has stalled"))
+    assert not is_presentable_risk(claim("constant currency growth is ..."))
     assert not is_presentable_risk(claim("The risk of not detecting a material misstatement resulting from fraud is higher."))
     assert is_presentable_risk(claim("Slower discretionary spending by US banking clients could weigh on revenue growth."))
 
@@ -197,8 +185,8 @@ def test_evidence_tolerates_whitespace_and_quote_style_but_stays_verbatim():
     src = Source(title="t", source_type=SourceType.WEB_ARTICLE, source_tier=SourceTier.AGGREGATOR, publisher="p", document_text=text)
     ev = make_evidence(src, "Our ability to maintain our competitive position depends on clients' budgets.")
     assert ev is not None
-    assert ev.evidence_text == text[ev.start_char:ev.end_char]  # the source's own characters
-    assert make_evidence(src, "Our ability to grow our competitive position depends on clients' budgets.") is None  # wording must match
+    assert ev.evidence_text == text[ev.start_char:ev.end_char]
+    assert make_evidence(src, "Our ability to grow our competitive position depends on clients' budgets.") is None
 
 
 def test_fragment_quotes_are_widened_to_the_whole_source_sentence():

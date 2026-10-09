@@ -1,25 +1,3 @@
-"""Company resolution: turns free-text company mentions from the user's
-query into a structured CompanyEntity (ticker/CIK/exchange).
-
-This is the single place company-identity lookup logic lives. No other
-module contains `if company == "..."` branching - everything downstream
-consumes CompanyEntity objects produced here.
-
-Resolution order:
-0. Industry universes (sample_data/industries.json) - checked first because
-   they are NSE listings the SEC directory doesn't know, and some of their
-   short names collide with unrelated US tickers ("TCS" on SEC EDGAR is
-   The Container Store, not Tata Consultancy Services).
-1. Live SEC EDGAR `company_tickers.json` (public, no API key required - only
-   a descriptive User-Agent per SEC's fair-access policy). Cached in-process
-   after first successful fetch.
-2. Bundled sample_data/company_directory_sample.json as an offline fallback
-   when the network/SEC endpoint is unavailable, or when DEMO_MODE is on.
-
-Matching is generic (exact ticker, exact name, substring, then fuzzy
-closest-match on normalized names) - it works for any company present in
-the directory, not just ones anyone hardcoded.
-"""
 from __future__ import annotations
 
 import difflib
@@ -123,17 +101,14 @@ class CompanyResolver:
         upper = raw_name.upper()
         normalized_query = _normalize(raw_name)
 
-        # 1. Exact ticker match
         for row in directory:
             if row.get("ticker") and row["ticker"].upper() == upper:
                 return self._to_entity(row)
 
-        # 2. Exact normalized name match
         for row in directory:
             if _normalize(row["name"]) == normalized_query:
                 return self._to_entity(row)
 
-        # 3. Substring match (query is contained in / contains the company name)
         candidates = [
             row for row in directory
             if normalized_query in _normalize(row["name"]) or _normalize(row["name"]) in normalized_query
@@ -141,11 +116,9 @@ class CompanyResolver:
         if len(candidates) == 1:
             return self._to_entity(candidates[0])
         if len(candidates) > 1:
-            # Prefer the shortest name (most specific / least likely a false substring match)
             best = min(candidates, key=lambda r: len(r["name"]))
             return self._to_entity(best)
 
-        # 4. Fuzzy match on normalized names
         names = [_normalize(row["name"]) for row in directory]
         close = difflib.get_close_matches(normalized_query, names, n=1, cutoff=0.72)
         if close:
@@ -159,21 +132,8 @@ class CompanyResolver:
         )
 
     def find_mentions(self, text: str) -> list[str]:
-        """Scan free text for whole-word matches of known company names/
-        tickers in the current directory. Used by the deterministic mock
-        QueryPlanner fallback (DEMO_MODE, or whenever a live LLM call fails)
-        to extract company mentions without an LLM. Returns raw names in
-        order of first appearance, deduplicated.
-
-        Matching is done on WORD BOUNDARIES, not a naive substring check -
-        a naive `"ppl" in "analyze apple"` would wrongly match "PPL Corp"
-        inside "Apple". A minimum normalized-name length also guards against
-        very short names matching common words by coincidence.
-        """
         universe = find_universe_mentions(text)
         found: list[str] = [company.name for company in universe]
-        # Tokens already claimed by a universe company must not also match
-        # an unrelated SEC registrant sharing that ticker/name.
         claimed = {key.upper() for company in universe for key in (company.nse, *company.aliases)}
         directory = self._load_directory()
         for row in directory:
@@ -185,7 +145,7 @@ class CompanyResolver:
             )
             ticker_match = bool(ticker) and re.search(rf"\b{re.escape(ticker)}\b", text)
             if universe and find_universe_company(short_name) is not None:
-                continue  # e.g. "Infosys Limited" already found as the universe's Infosys
+                continue
             if (name_match or ticker_match) and name not in found:
                 found.append(name)
         return found

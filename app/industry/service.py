@@ -1,16 +1,3 @@
-"""Industry snapshots, built from the database.
-
-Database first, API as fallback:
-  1. The snapshot is always computed from stored filings - a few indexed
-     queries, milliseconds.
-  2. A company with nothing stored yet is fetched from the source API before
-     answering (first visit only), and the result is stored.
-  3. A company whose stored data is older than FILINGS_SYNC_HOURS is served
-     from the database immediately while a background sync checks the API
-     for newer filings.
-Offline (DEMO_MODE) the source API is never contacted; missing companies
-are loaded from the bundled seed of real filings.
-"""
 from __future__ import annotations
 
 import logging
@@ -31,7 +18,6 @@ logger = logging.getLogger("financial_research_agent.industry.service")
 
 
 def build_snapshot(industry: IndustryDefinition, mode: str = "live") -> IndustrySnapshot:
-    """Computes the industry view purely from what the database holds."""
     started = time.perf_counter()
     ids = [store.company_id_for(ref.nse) for ref in industry.companies]
     db = get_session()
@@ -60,9 +46,6 @@ def build_snapshot(industry: IndustryDefinition, mode: str = "live") -> Industry
 
 
 class IndustryService:
-    """One background refresh per industry at a time (class-level state,
-    because the API constructs a service per request)."""
-
     _refreshing: set[str] = set()
     _guard = threading.Lock()
 
@@ -85,10 +68,9 @@ class IndustryService:
         else:
             missing, stale = sync.freshness(industry.companies)
             if missing:
-                # Nothing stored yet for these - must fetch before answering.
                 warnings += sync.refresh(missing, industry.id)
             if self.settings.effective_demo_mode:
-                stale = []  # the offline seed never changes
+                stale = []
             if stale:
                 self.refresh_in_background(industry_id, stale)
 

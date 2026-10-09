@@ -1,18 +1,3 @@
-"""Deterministic Numeric Matcher (PRD section 12).
-
-Independently re-parses the claim's own evidence_text for any numeric
-value/unit/currency it can find, and checks whether the extracted claim's
-value is actually backed by a number present in that text - catching
-extraction slips or (in adversarial tests) deliberately corrupted claim
-values, per the PRD's canonical example:
-    Source says: Revenue = $85.8 billion
-    Claim says:  Revenue = $85.8 billion   -> deterministic match, no LLM needed
-    Claim says:  Revenue = $88.5 billion   -> deterministic mismatch, flagged
-
-This never calls an LLM - it is pure string/number parsing, reusing the same
-scale-factor table as the ClaimNormalizer so "billion"/"crore"/etc. are
-handled consistently everywhere in the app.
-"""
 from __future__ import annotations
 
 import re
@@ -30,9 +15,6 @@ CONTRADICTION_THRESHOLD_PCT = 2.0
 
 
 def _find_candidate_magnitudes(text: str) -> list[tuple[float, str]]:
-    """Scans free text for numbers that look like real financial figures
-    (has a currency symbol, a scale word, or a trailing %) - bare integers
-    like a year ("2024") are deliberately excluded to avoid false matches."""
     candidates: list[tuple[float, str]] = []
     for m in _NUMBER_RE.finditer(text):
         end = m.end()
@@ -51,10 +33,6 @@ def _find_candidate_magnitudes(text: str) -> list[tuple[float, str]]:
 
 
 def _exact_match(value: str, unit: str | None, evidence_text: str) -> bool:
-    """A bare numeric substring match is NOT enough: "85.8" appears inside
-    both "$85.8 billion" and "$85.8 million", so if the claim's unit is a
-    scale word, that scale word must also appear near the matched number -
-    otherwise a wrong-unit adversarial claim would be falsely marked exact."""
     value_str = value.strip()
     if not value_str or value_str not in evidence_text:
         return False
@@ -67,11 +45,6 @@ def _exact_match(value: str, unit: str | None, evidence_text: str) -> bool:
 
 
 def _period_match(claim_period: str | None, evidence_text: str) -> bool | None:
-    """Requires BOTH the quarter token (Q1-Q4, if present) and the year token
-    to appear in the evidence - matching only the year (e.g. claim "Q3 2024"
-    against evidence mentioning "Q2 2024") is NOT enough, otherwise a
-    same-year-wrong-quarter adversarial claim would slip through as a match.
-    """
     if not claim_period:
         return None
     evidence_lower = evidence_text.lower()
@@ -83,8 +56,6 @@ def _period_match(claim_period: str | None, evidence_text: str) -> bool | None:
     if year:
         checks.append(year.group(0) in evidence_lower)
     if not checks:
-        # No recognizable quarter/year token (e.g. "TTM") - fall back to a
-        # loose whole-string containment check.
         return claim_period.lower() in evidence_lower
     return all(checks)
 

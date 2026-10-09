@@ -1,12 +1,3 @@
-"""End-to-end test using the FastAPI app with mocked external providers
-(DEMO_MODE, forced by conftest.py) - no live API dependency, per PRD
-section 21: 'at least one end-to-end test using mocked external providers'.
-
-POST /research returns immediately (status=pending) and runs the pipeline
-in a background thread - see ResearchOrchestrator.start_async - so real
-runs with paced LLM calls don't block the HTTP response for minutes. Tests
-poll GET /research/{id} for the terminal status, same as the frontend does.
-"""
 import time
 
 from fastapi.testclient import TestClient
@@ -41,10 +32,7 @@ def test_full_research_pipeline_via_api():
         assert claims_resp.status_code == 200
         claims = claims_resp.json()
         assert len(claims) > 0
-        # 100% citation verification coverage: every claim has a verdict.
         assert all(c["verification_status"] is not None for c in claims)
-        # No fabricated citations: every claim's evidence_span source_id must
-        # match a source that was actually retrieved and stored.
         sources_resp = client.get(f"/api/research/{run_id}/sources")
         assert sources_resp.status_code == 200
         sources = sources_resp.json()

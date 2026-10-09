@@ -1,16 +1,3 @@
-"""Follow-Up Research Loop decision module (PRD section 16).
-
-Answers two questions the PRD explicitly wants an LLM for when available:
-"is the evidence gathered so far sufficient to answer the research
-question?" and "if not, what should we search for next?". The actual
-iteration loop (bounded by max_followup_iterations / max_research_queries)
-lives in ResearchOrchestrator - this module only makes the sufficiency
-judgement and proposes targeted sub-queries for one round.
-
-Mock path is a deterministic rule: any claim whose metric was explicitly
-requested (or is a core financial metric) and came back INSUFFICIENT
-triggers a follow-up query for that exact metric/entity/period.
-"""
 from __future__ import annotations
 
 import logging
@@ -54,7 +41,6 @@ class FollowupResearch:
         self.llm = get_llm_provider() if llm is NOT_GIVEN else llm
 
     def assess(self, plan: ResearchPlan, claims: list[Claim]) -> tuple[bool, list[SubQuery], str]:
-        """Returns (sufficient, followup_sub_queries, reasoning)."""
         if self.llm is not None:
             try:
                 return self._llm_assess(plan, claims)
@@ -78,7 +64,6 @@ class FollowupResearch:
             for q in output.followup_queries
         ]
         if not output.sufficient and not sub_queries:
-            # Safety net: LLM said insufficient but gave nothing to search for - fall back to rules.
             _, sub_queries, _ = self._rule_based_assess(plan, claims)
         return output.sufficient, sub_queries, output.reasoning
 
@@ -112,16 +97,6 @@ class FollowupResearch:
 
 
 def _coverage_summary(claims: list[Claim]) -> str:
-    """Collapses the full claim list into one line per (entity, metric)
-    stating the best verdict reached and how many claims support it.
-
-    The sufficiency question is only ever "which metrics still lack solid
-    evidence?", so sending every individual claim was both needlessly
-    verbose and a worse prompt. Measured: the full-claim version produced
-    a ~6,800-token request - nearly an entire minute's token budget on a
-    free tier - for a question answerable from a summary a fraction of
-    that size.
-    """
     if not claims:
         return "(no claims extracted yet)"
 

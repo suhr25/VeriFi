@@ -1,7 +1,3 @@
-/* IPO Centre - matches the VeriFi design tokens in styles.css (teal/ink
-   palette, Space Grotesk headings, DM Mono labels) so it reads as part of
-   the same product, not a bolted-on page. */
-
 .ipo-board { padding: 2px 7px; margin-left: 2px; border-radius: 4px; color: var(--accent-strong); background: var(--teal-pale); font: 500 9px "DM Mono", monospace; letter-spacing: .04em; text-transform: uppercase; vertical-align: middle; }
 
 .ipo-status { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 999px; font: 600 10px "DM Mono", monospace; letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; }
@@ -66,7 +62,6 @@
   .ipo-metrics { grid-template-columns: 1fr 1fr; }
 }
 
-/* ---- Refinements (design system pass) ---- */
 .ipo-back { margin-bottom: var(--s-5); font-size: 12.5px; }
 .ipo-detail-head { display: flex; align-items: flex-start; gap: var(--s-4); margin-bottom: var(--s-6); }
 .ipo-detail-mono { width: 48px; height: 48px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--r-lg); color: #f0f8f5; background: var(--text-primary); font: 600 20px var(--font-display); }
@@ -81,18 +76,15 @@
 .ipo-ask-row input { height: 46px; border-color: var(--border); border-radius: var(--r-md); background: var(--surface-hover); }
 .ipo-ask-row input:focus { border-color: var(--accent); background: var(--surface); box-shadow: var(--ring); }
 .ipo-ask-row .button { height: 46px; border-radius: var(--r-md); }
-/* Many sections: fade the tab bar's right edge so overflow reads as scrollable. */
 .ipo-detail-tabs .vtabs { mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); }
 @media (max-width: 560px) {
   .ipo-detail-mono { width: 40px; height: 40px; font-size: 17px; }
 }
 
-/* ---- Density pass ---- */
 .ipo-detail-head h1 { font-size: 26px; }
 .ipo-card-stats strong { font: 500 13px var(--font-num); }
 .ipo-card { box-shadow: none; }
 
-/* ---- Dark theme ---- */
 .ipo-status-open { color: var(--accent-strong); background: var(--accent-soft); }
 .ipo-status-closed { color: var(--text-secondary); background: rgba(255,255,255,.06); }
 .ipo-status-listed { color: var(--text-primary); background: rgba(255,255,255,.1); }

@@ -1,13 +1,3 @@
-"""Claim Extractor: pulls numeric and qualitative claims out of retrieved
-Source documents into the canonical Claim schema (PRD section 10).
-
-Hard rule enforced in both paths: a claim's evidence_span must point at text
-that verbatim exists in the source's document_text. The LLM path asks the
-model to quote evidence exactly and discards any claim whose quote cannot be
-located in the source (never trusts an LLM-invented span). The mock path
-never has this problem by construction - it extracts directly from regex
-match spans in the real (mock-labelled) document_text.
-"""
 from __future__ import annotations
 
 import logging
@@ -22,26 +12,12 @@ from app.schemas import Basis, Claim, ClaimType, Evidence, ResearchPlan, Source
 
 logger = logging.getLogger("financial_research_agent.extraction.claim_extractor")
 
-# Token-budget tuning. Under a free-tier per-minute token cap these three
-# constants are what actually determine how long a real run takes, so they
-# are deliberately conservative: financial figures and risk statements
-# cluster near the top of filings/articles, so 3500 chars captures the
-# useful part of almost every source we retrieve.
 MAX_SOURCE_CHARS_FOR_LLM = 3500
 SOURCE_BATCH_SIZE = 3
-# Must leave room for a full batch's worth of JSON claims. Too low and a
-# response gets truncated mid-JSON and is discarded entirely (observed as
-# "Expecting value: line 1 column 1" with an empty completion), which
-# wastes the whole call's token spend - the opposite of the goal.
 MAX_EXTRACTION_COMPLETION_TOKENS = 2600
 
 
 def _build_rag_query(plan: ResearchPlan) -> str:
-    """Turns a ResearchPlan into the text query used for RAG chunk
-    retrieval - what the LLM extractor should actually be looking for in a
-    long source, rather than "whatever appears first". Falls back to a
-    generic financial-metrics query when the planner didn't extract
-    anything more specific (e.g. the deterministic mock planner)."""
     parts = [
         *plan.requested_metrics,
         *plan.financial_questions,
@@ -107,14 +83,6 @@ class ClaimExtractor:
         self.llm = get_llm_provider() if llm is NOT_GIVEN else llm
 
     def extract(self, research_run_id: str, sources: list[Source], plan: ResearchPlan) -> list[Claim]:
-        """Extracts claims from every source. With an LLM configured, sources
-        are processed in batches (SOURCE_BATCH_SIZE per call) rather than one
-        call per source - measured: one call per source meant ~11 calls x
-        ~3900 tokens for a single run, which under a free-tier per-minute
-        token budget serialised into 6+ minutes of pacing. Batching cuts
-        call count and, more importantly, pays the fixed per-call overhead
-        (system prompt + JSON schema) once per batch instead of once per
-        source."""
         if self.llm is None:
             claims: list[Claim] = []
             for source in sources:
@@ -135,20 +103,12 @@ class ClaimExtractor:
                     claims.extend(self._mock_extract(research_run_id, source, plan))
         return claims
 
-    # ---- Real path -----------------------------------------------------
-
     def _llm_extract_batch(self, research_run_id: str, sources: list[Source], plan: ResearchPlan) -> list[Claim]:
         entities = ", ".join(c.name for c in plan.companies) or "the company/companies mentioned"
         rag_query = _build_rag_query(plan)
         blocks = []
         for i, source in enumerate(sources, start=1):
             company_hint = source.metadata.get("company_name")
-            # RAG: for a source longer than a plain prefix would sensibly
-            # cover, retrieve the chunks most relevant to what this plan
-            # actually asks about (LangChain RecursiveCharacterTextSplitter
-            # + FAISS + local embeddings - see app/rag/indexer.py) instead
-            # of blindly cutting at MAX_SOURCE_CHARS_FOR_LLM and losing
-            # whatever came after that character.
             text = retrieve_relevant_text(source.document_text, rag_query, MAX_SOURCE_CHARS_FOR_LLM)
             blocks.append(
                 f"--- SOURCE {i} ---\n"
@@ -182,12 +142,6 @@ class ClaimExtractor:
             source = sources[idx]
             evidence = make_evidence(source, draft.quoted_evidence)
             if evidence is None:
-                # The model sometimes cites the wrong SOURCE number for a quote
-                # (measured: risk sentences from a news article attributed to
-                # the database document). The quote may be re-attributed to the
-                # source that really contains it - verbatim - but only one about
-                # the same company: re-matching across companies could turn a
-                # sentence about one company into a claim about another.
                 for other in sources:
                     if other is source or not _same_company(draft.entity, other, plan):
                         continue
@@ -207,8 +161,6 @@ class ClaimExtractor:
                 evidence = expand_to_sentence(source, evidence)
             claims.append(_build_claim(research_run_id, source, draft, evidence))
         return claims
-
-    # ---- Mock path -------------------------------------------------------
 
     def _mock_extract(self, research_run_id: str, source: Source, plan: ResearchPlan) -> list[Claim]:
         entity = _resolve_entity_for_source(source, plan)
@@ -258,9 +210,6 @@ class ClaimExtractor:
 
 
 def _same_company(entity: str, source: Source, plan: ResearchPlan) -> bool:
-    """Whether `source` is about the company a claim names. Sources are
-    tagged with the company they were retrieved for; an untagged source
-    only counts in a single-company plan."""
     tag = (source.metadata.get("company_name") or "").lower()
     name = (entity or "").lower()
     if not tag:
@@ -272,11 +221,6 @@ MAX_SENTENCE_CHARS = 400
 
 
 def expand_to_sentence(source: Source, evidence: Evidence) -> Evidence:
-    """Widens a quote that starts or ends mid-sentence to the whole sentence
-    around it, in the source's own words. Measured: the model quoted
-    "which may reduce revenues from certain traditional services..." - the
-    second half of a risk sentence - which reads as a fragment. Still
-    verbatim source text; nothing is added that the source doesn't say."""
     text = source.document_text
     start, end = evidence.start_char, evidence.end_char
     terminators = ".!?\n"
@@ -297,8 +241,6 @@ def expand_to_sentence(source: Source, evidence: Evidence) -> Evidence:
 
 def _build_claim(research_run_id: str, source: Source, draft: _ExtractedClaimDraft, evidence: Evidence) -> Claim:
     statement = draft.statement
-    # A qualitative claim's statement is its (now complete) source sentence
-    # when the model just echoed a fragment of it.
     if draft.claim_type == ClaimType.QUALITATIVE and draft.statement.strip() in evidence.evidence_text \
             and draft.statement.strip() != evidence.evidence_text:
         statement = evidence.evidence_text
@@ -322,11 +264,6 @@ def _slugify_metric(metric: str) -> str:
 
 
 def _resolve_entity_for_source(source: Source, plan: ResearchPlan) -> str:
-    """Determines which company a source is about, for the mock extractor.
-    Prefers the explicit company_name tag SourceRetriever stamps onto every
-    source's metadata; falls back to the single company in a single-company
-    plan, then to a substring match against the source title/text, and only
-    then to the first company as a last resort."""
     tagged = source.metadata.get("company_name")
     if tagged:
         return tagged
@@ -337,8 +274,6 @@ def _resolve_entity_for_source(source: Source, plan: ResearchPlan) -> str:
             return company.name
     return plan.companies[0].name if plan.companies else "Unknown Entity"
 
-
-# ---- Mock-mode deterministic extraction helpers ----------------------------
 
 METRIC_ALIASES = {
     "revenue": "revenue", "revenue_ttm": "revenue", "revenues": "revenue", "total revenue": "revenue",
@@ -380,9 +315,6 @@ def _infer_basis(text: str, start: int) -> Basis:
 
 
 def _extract_numeric_matches(text: str):
-    """Yields (metric, matched_text, num, unit, start, end, basis) tuples
-    with offsets guaranteed correct (computed directly from regex match
-    spans against the real document_text, never LLM-provided)."""
     for m in _PATTERN_KV.finditer(text):
         metric = METRIC_ALIASES.get(m.group("label").lower())
         if not metric:
@@ -411,9 +343,6 @@ _SENTENCE_RE = re.compile(r"[^.!?\n]+[.!?]")
 def _extract_risk_sentences(text: str):
     for m in _SENTENCE_RE.finditer(text):
         raw = m.group(0)
-        # Trim leading/trailing whitespace while keeping start/end tightly
-        # aligned to the trimmed text, so evidence_text always exactly
-        # equals source.document_text[start:end].
         lstrip_len = len(raw) - len(raw.lstrip())
         rstrip_len = len(raw) - len(raw.rstrip())
         start, end = m.start() + lstrip_len, m.end() - rstrip_len

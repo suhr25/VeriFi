@@ -1,12 +1,3 @@
-"""Answering questions from the database - the fast path for research.
-
-For companies VeriFi holds, a question is answered from stored, verified
-filings in milliseconds: a company brief or a side-by-side comparison, the
-exact period asked about if one was named, and plain-English sentences
-built from the numbers (templated, not generated). A company that isn't
-stored yet is fetched from the source first and stored, so every later
-question about it is instant.
-"""
 from __future__ import annotations
 
 import time
@@ -25,7 +16,6 @@ from app.schemas.industry import CompanyMetrics
 from app.storage.models import CompanyORM
 
 ROWS: dict[str, tuple[str, str, bool | None]] = {
-    # metric: (label, kind, higher_is_better)
     "revenue_ttm": ("Revenue (last 12 months)", "inr", None),
     "revenue_growth_yoy": ("Revenue growth (YoY, latest quarter)", "pct_signed", True),
     "net_income_ttm": ("Net profit (last 12 months)", "inr", None),
@@ -35,9 +25,6 @@ ROWS: dict[str, tuple[str, str, bool | None]] = {
     "eps_ttm": ("EPS (last 12 months, diluted)", "rupees", None),
     "revenue_share": ("Share of IT industry revenue", "pct", None),
 }
-
-
-# ---- Formatting for sentences (mirrors the frontend's Indian notation) ----------
 
 
 def _indian_group(n: int) -> str:
@@ -72,9 +59,6 @@ def _d(iso: str) -> str:
     return date.fromisoformat(iso[:10]).strftime("%d %b %Y").lstrip("0")
 
 
-# ---- Building the answer -------------------------------------------------------------
-
-
 def _period_figures(filings: list[Filing], req: PeriodRequest, coverage: str) -> PeriodFigures:
     end = req.period_end.isoformat()
     if req.kind == "quarter":
@@ -105,7 +89,6 @@ def _rows(companies: list[CompanyMetrics], metrics: list[str]) -> list[Compariso
 
 
 def _company_summary(c: CompanyMetrics) -> list[tuple[str, str]]:
-    """(topic, sentence) pairs, so the answer can lead with what was asked."""
     out = []
     if c.revenue_ttm is not None:
         s = f"{c.short_name} earned {inr(c.revenue_ttm)} in revenue over the last four reported quarters"
@@ -159,7 +142,6 @@ TOPIC_OF = {"revenue_ttm": "revenue", "revenue_share": "revenue", "revenue_growt
 
 
 def _ordered(pairs: list[tuple[str, str]], intent: Intent) -> list[str]:
-    """Lead with the topics the question asked about."""
     if not intent.metrics_explicit:
         return [s for _, s in pairs]
     wanted = []
@@ -184,13 +166,9 @@ def answer(db: Session, intent: Intent) -> DatabaseAnswer | NotAnswered:
     if not intent.companies:
         return NotAnswered(reason="No company that VeriFi holds was mentioned.")
 
-    # Database first. A company with nothing stored is fetched from the
-    # source once and stored - every later question about it is instant.
     missing, _ = sync.freshness(intent.companies)
     warnings = sync.refresh(missing, None) if missing else []
 
-    # One batched read: the companies asked about plus their industry peers
-    # (peers are needed for each company's share of industry revenue).
     ids = [store.company_id_for(r.nse) for r in intent.companies]
     industry = industry_for_company(intent.companies[0].nse)
     peer_refs = [r for r in (industry.companies if industry else []) if r.nse not in {c.nse for c in intent.companies}]

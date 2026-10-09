@@ -6,9 +6,6 @@ from app.verification.entailment_checker import EntailmentChecker
 
 
 class _FakeLLM(LLMProvider):
-    """Returns a canned response regardless of prompt, so batching/mapping
-    logic can be tested without a real network call."""
-
     def __init__(self, response_json: dict):
         self._response = json.dumps(response_json)
 
@@ -51,7 +48,6 @@ def test_qualitative_claim_unrelated_to_evidence_is_insufficient():
 
 
 def test_result_is_a_valid_structured_entailment_result():
-    """PRD: entailment output must be a structured Pydantic result, not free text."""
     evidence = "Net income was $21.4 billion for the quarter."
     claim = _qualitative_claim(evidence, evidence)
     result = EntailmentChecker(llm=None).check(claim)
@@ -68,8 +64,6 @@ def test_check_batch_with_no_llm_uses_mock_for_every_claim():
 
 
 def test_check_batch_maps_results_back_by_claim_number_not_list_order():
-    """The fake LLM deliberately returns results out of order - verifies
-    mapping is done by claim_number, not by position in the response list."""
     claims = [_qualitative_claim(f"claim-{i}", f"evidence-{i}") for i in range(1, 4)]
     fake = _FakeLLM(
         {
@@ -87,8 +81,6 @@ def test_check_batch_maps_results_back_by_claim_number_not_list_order():
 
 
 def test_check_batch_falls_back_to_mock_per_chunk_on_llm_failure():
-    """A failing LLM must not crash the whole run - each affected chunk
-    falls back to the deterministic mock checker."""
     claims = [_qualitative_claim(f"claim {i}", f"claim {i}") for i in range(2)]
     results = EntailmentChecker(llm=_FailingLLM()).check_batch(claims)
     assert set(results.keys()) == {c.claim_id for c in claims}
@@ -97,8 +89,6 @@ def test_check_batch_falls_back_to_mock_per_chunk_on_llm_failure():
 
 
 def test_check_batch_chunks_large_claim_lists():
-    """More claims than ENTAILMENT_BATCH_SIZE must still all get a result -
-    exercises the multi-chunk path."""
     from app.verification.entailment_checker import ENTAILMENT_BATCH_SIZE
 
     n = ENTAILMENT_BATCH_SIZE * 2 + 1

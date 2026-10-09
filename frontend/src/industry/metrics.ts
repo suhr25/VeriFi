@@ -10,7 +10,6 @@ export interface MetricDef {
   label: string;
   short: string;
   format: (v: number | null | undefined) => string;
-  /** true = higher is better, false = lower is better, null = neither (size). */
   better: boolean | null;
   help: string;
 }
@@ -52,7 +51,6 @@ export function median(values: number[]): number | null {
   return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
 }
 
-/** 1 = best in peer set, n = worst; null if the metric has no direction or no value. */
 export function rank(companies: CompanyMetrics[], c: CompanyMetrics, key: MetricKey): { rank: number; of: number } | null {
   const def = METRICS[key];
   const own = value(c, key);

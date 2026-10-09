@@ -43,8 +43,6 @@ class AlphaVantageProvider(FinancialDataProvider):
                 raise ValueError(f"No Alpha Vantage overview data for {company.ticker}")
 
             lines = [f"Alpha Vantage company overview for {company.name} ({company.ticker})."]
-            # Reported financials only - VeriFi doesn't deliver market data
-            # (market cap, P/E and other price-derived figures are omitted).
             fields = [
                 ("EBITDA", "ebitda"),
                 ("RevenueTTM", "revenue_ttm"),

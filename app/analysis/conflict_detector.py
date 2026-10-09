@@ -1,19 +1,10 @@
-"""Conflict Detector (PRD section 13).
-
-Compares normalized numeric claims about the SAME entity+metric from
-DIFFERENT sources. Per the PRD's explicit instruction, a conflict is never
-reported just because two values differ - period, currency/unit, and basis
-compatibility are checked first, and a mismatch there explains the
-difference away as a normalization issue rather than a genuine
-disagreement (e.g. "EBITDA = $10B adjusted" vs "EBITDA = $8B GAAP").
-"""
 from __future__ import annotations
 
 from collections import defaultdict
 
 from app.schemas import Basis, Claim, ClaimType, Conflict, ConflictReasonType, PeriodType
 
-CONFLICT_TOLERANCE_PCT = 1.0  # values within this % are treated as agreeing, not conflicting
+CONFLICT_TOLERANCE_PCT = 1.0
 
 
 class ConflictDetector:
@@ -62,7 +53,7 @@ class ConflictDetector:
             pct_diff = abs(mag_a - mag_b) / max(abs(mag_a), abs(mag_b)) * 100
 
         if pct_diff <= CONFLICT_TOLERANCE_PCT:
-            return None  # values agree within tolerance - not a conflict
+            return None
 
         if a.basis != b.basis and a.basis != Basis.UNKNOWN and b.basis != Basis.UNKNOWN:
             return _make_conflict(

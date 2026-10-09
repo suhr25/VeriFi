@@ -21,8 +21,6 @@ def test_normalize_value_handles_scale_currency_and_percent(value, unit, evidenc
 
 
 def test_billion_and_million_representations_are_numerically_equal():
-    """PRD section 11: $1.2 billion and $1,200 million must normalize to the
-    same magnitude even though their raw textual representations differ."""
     mag_a, unit_a, _ = normalize_value("1.2", "billion", "$1.2 billion")
     mag_b, unit_b, _ = normalize_value("1,200", "million", "$1,200 million")
     assert unit_a == unit_b

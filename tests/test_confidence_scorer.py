@@ -66,7 +66,7 @@ def test_primary_filing_source_scores_higher_than_aggregator_source():
 def test_corroboration_increases_confidence():
     claim_a, ver_a, src_a = _make_claim_and_verification(SourceTier.PRESS, True, 0.9)
     claim_b, ver_b, src_b = _make_claim_and_verification(SourceTier.PRESS, True, 0.9)
-    claim_b.source_id = "src_other"  # different source, same entity/metric/value -> corroborates claim_a
+    claim_b.source_id = "src_other"
 
     scorer = ConfidenceScorer()
     all_claims = [claim_a, claim_b]

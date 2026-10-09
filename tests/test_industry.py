@@ -1,7 +1,3 @@
-"""Industry dashboard: filing parsing, analytics over reported financials,
-consistency checks, and the API surface. Runs offline - analytics take
-synthetic filings, and the API is served from the database, filled from the
-bundled seed of real filings (DEMO_MODE)."""
 import pytest
 from fastapi.testclient import TestClient
 
@@ -12,7 +8,7 @@ from app.retrieval.company_resolver import CompanyResolver
 from app.schemas.industry import CompanyMetrics, IndustryCompanyRef
 
 REF = IndustryCompanyRef(name="Example Tech", short_name="ExT", symbol="EXT.NS", nse="EXT", tier="Large cap")
-CR = 1e7  # one crore
+CR = 1e7
 
 
 def _filing(end: str, revenue: float, ni: float, **kw) -> Filing:
@@ -26,8 +22,6 @@ def _filing(end: str, revenue: float, ni: float, **kw) -> Filing:
     return Filing(**base)
 
 
-# Six quarters, newest first, as the store returns them. FY26 (Apr-25..Mar-26)
-# quarters sum to 100+110+115+120 = 445 revenue, 44.5 profit.
 FILINGS = [
     _filing("2026-06-30", 130, 13.0),
     _filing("2026-03-31", 120, 12.0, annual_revenue=445 * CR, annual_net_income=44.5 * CR),
@@ -49,7 +43,7 @@ def test_ttm_and_ratios_come_from_four_consecutive_filings():
     assert m.profit_margin == pytest.approx(0.1)
     assert m.eps_ttm == pytest.approx((13 + 12 + 11.5 + 11) / 100)
     assert m.shares_outstanding == pytest.approx(100 * CR)
-    assert m.revenue_growth_yoy == pytest.approx(0.30)  # Jun-26 vs Jun-25
+    assert m.revenue_growth_yoy == pytest.approx(0.30)
     assert m.earnings_growth_yoy == pytest.approx(0.30)
     assert m.verification_status == "verified"
     assert [q.filing_url for q in m.quarters][-1].endswith("2026-06-30.xml")
@@ -75,9 +69,6 @@ def test_quarterly_filings_that_do_not_add_up_to_the_annual_report_are_flagged()
 
 
 def test_eps_check_allows_a_mid_quarter_buyback():
-    """Basic EPS uses the weighted-average share count, which sits between
-    the quarter-start and quarter-end counts (measured: Wipro's June 2026
-    buyback put period-end shares 5.5% below the EPS-implied count)."""
     latest = _filing("2026-06-30", 130, 13.0, paid_up_capital=95 * CR, eps_basic=13.0 * CR / (97.5 * CR))
     m = _build([latest, *FILINGS[1:]])
     assert next(c for c in m.checks if c.metric == "eps").status == "verified"
@@ -113,8 +104,6 @@ def test_xbrl_picks_quarter_and_full_year_by_context_dates_and_ignores_segments(
 
 
 def test_mis_tagged_owners_profit_is_corrected_by_accounting_identity_and_noted():
-    """Tech Mahindra's Dec-2025 filing tagged owners' profit as Rs 198.7 Cr
-    while its total profit was Rs 1,118.6 Cr and minority interest Rs 5.1 Cr."""
     xml = _xbrl([
         ("RevenueFromOperations", "Q", "143930000000"),
         ("ProfitLossForPeriod", "Q", "11186000000"),

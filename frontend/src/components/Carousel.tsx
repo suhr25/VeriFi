@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-/** Horizontal scroll-snap row with arrow controls and edge fades. Native
- * scrolling underneath, so touch swipe and trackpads just work. */
 export function Carousel({ children, label, count }: { children: ReactNode; label: string; count: number }) {
   const track = useRef<HTMLDivElement>(null);
   const [edge, setEdge] = useState({ start: true, end: false });

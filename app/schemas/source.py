@@ -9,14 +9,6 @@ from app.schemas.enums import SourceTier, SourceType
 
 
 class Source(BaseModel):
-    """A single retrieved document, with the full original text preserved.
-
-    The PRD is explicit: "Do not merely store a generated summary as the
-    evidence. The actual source text must remain available." `document_text`
-    is therefore the raw, retrieved text - never an LLM summary - and all
-    Evidence spans are character offsets into this exact string.
-    """
-
     source_id: str = Field(default_factory=lambda: f"src_{uuid4().hex[:12]}")
     title: str
     url: str | None = None
@@ -32,11 +24,6 @@ class Source(BaseModel):
 
 
 class Evidence(BaseModel):
-    """A pointer into a specific Source's document_text. `evidence_text` is
-    stored redundantly (denormalized) for convenience/display, but it must
-    always equal source.document_text[start_char:end_char] - validated by
-    whoever constructs it (see app/retrieval/base.py helpers)."""
-
     source_id: str
     start_char: int
     end_char: int

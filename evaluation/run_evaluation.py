@@ -1,17 +1,3 @@
-"""Evaluation harness entry point (PRD section 18/20).
-
-Runs the hand-labelled verification and conflict-detection evaluation sets
-through the REAL pipeline modules (VerificationEngine, ConflictDetector,
-ConfidenceScorer - all in their deterministic DEMO_MODE/mock configuration
-so results are 100% reproducible without API keys), computes accuracy /
-precision / recall / Brier score, and writes a JSON report. This is what
-actually MEASURES the PRD's success criteria rather than asserting them:
-    - 100% citation verification coverage
-    - 90%+ conflict flagging accuracy
-    - calibrated confidence with a reported Brier score
-
-Run with:  python -m evaluation.run_evaluation
-"""
 from __future__ import annotations
 
 import json
@@ -28,8 +14,6 @@ from evaluation.labeled_eval_set import EvalCase, build_eval_set
 
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
 
-# Cycled across cases to give the confidence scorer's source_quality
-# component real spread, rather than every case getting one fixed tier.
 SOURCE_TIER_CYCLE = [SourceTier.PRIMARY_FILING, SourceTier.FINANCIAL_API, SourceTier.PRESS, SourceTier.AGGREGATOR]
 
 VERDICT_LABELS = ["supported", "contradicted", "insufficient"]
